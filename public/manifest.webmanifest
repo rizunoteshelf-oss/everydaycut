@@ -1,0 +1,55 @@
+{
+  "name": "EverydayCut - Free AI Photo Studio",
+  "short_name": "EverydayCut",
+  "description": "100% Free Client-Side AI Background Remover, Magic Eraser, and Creative Studio. No cloud uploads, private and unlimited.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#09090b",
+  "theme_color": "#22c55e",
+  "categories": ["photo", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Remove Background",
+      "short_name": "Cutout",
+      "description": "Instantly isolate subject with transparent background",
+      "url": "/#/background-remover",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Magic Eraser",
+      "short_name": "Eraser",
+      "description": "Brush over and erase unwanted objects",
+      "url": "/#/magic-eraser",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "PAN Photo Cropper",
+      "short_name": "PAN Photo",
+      "description": "213x213 px <30KB official compliance cropper",
+      "url": "/#/pan-card-photo-cropper",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

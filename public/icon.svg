@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18181b" />
+      <stop offset="100%" stop-color="#09090b" />
+    </linearGradient>
+    <linearGradient id="brand" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ade80" />
+      <stop offset="100%" stop-color="#22c55e" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#22c55e" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Squircle App Background -->
+  <rect width="512" height="512" rx="128" fill="url(#bg)" />
+  <rect width="504" height="504" x="4" y="4" rx="124" fill="none" stroke="#27272a" stroke-width="4" />
+
+  <!-- Scissors Cutout Mark -->
+  <g transform="translate(96, 96) scale(0.625)" filter="url(#glow)">
+    <!-- Top Left Blade -->
+    <path d="M120 40 L392 312" stroke="url(#brand)" stroke-width="44" stroke-linecap="round" />
+    <!-- Bottom Left Blade -->
+    <path d="M120 472 L392 200" stroke="url(#brand)" stroke-width="44" stroke-linecap="round" />
+    
+    <!-- Central Pivot Rivet -->
+    <circle cx="256" cy="256" r="28" fill="#18181b" stroke="url(#brand)" stroke-width="14" />
+
+    <!-- Top Left Finger Ring -->
+    <circle cx="100" cy="100" r="56" fill="none" stroke="url(#brand)" stroke-width="36" />
+
+    <!-- Bottom Left Finger Ring -->
+    <circle cx="100" cy="412" r="56" fill="none" stroke="url(#brand)" stroke-width="36" />
+
+    <!-- Sparkle Accent on Blade Tip -->
+    <path d="M420 180 L430 200 L450 210 L430 220 L420 240 L410 220 L390 210 L410 200 Z" fill="#ffffff" />
+  </g>
+</svg>

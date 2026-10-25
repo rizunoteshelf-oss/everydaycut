@@ -14,6 +14,8 @@ import { AboutModal } from './components/legal/AboutModal.tsx';
 import { BatchStudio } from './components/batch/BatchStudio.tsx';
 import { SEOHead } from './seo/SEOHead.tsx';
 import { getPresetBySlug, getSEOEntryByPreset } from './seo/seoData.ts';
+import { usePwaInstall } from './components/pwa/usePwaInstall.ts';
+import { PwaCelebrationModal } from './components/pwa/PwaCelebrationModal.tsx';
 
 export const App: React.FC = () => {
   const stageRef = useRef<Konva.Stage | null>(null);
@@ -24,6 +26,16 @@ export const App: React.FC = () => {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [batchOpen, setBatchOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  // Progressive Web App (PWA) Install Management
+  const {
+    isInstallable,
+    isInstalled,
+    promptInstall,
+    showCelebration,
+    closeCelebration,
+    triggerExportCelebration,
+  } = usePwaInstall();
 
   // Sync incoming route / hash on mount and hashchange
   useEffect(() => {
@@ -63,6 +75,10 @@ export const App: React.FC = () => {
         stageRef={stageRef}
         onNewImage={reset}
         onOpenBatch={() => setBatchOpen(true)}
+        onExportSuccess={triggerExportCelebration}
+        onInstallPwa={promptInstall}
+        isPwaInstallable={isInstallable}
+        isPwaInstalled={isInstalled}
       />
 
       {/* Main Studio Viewport & Sidebar */}
@@ -83,6 +99,9 @@ export const App: React.FC = () => {
               onOpenAbout={() => setAboutOpen(true)}
               isOpenOnMobile={mobileSidebarOpen}
               onCloseMobile={() => setMobileSidebarOpen(false)}
+              onInstallPwa={promptInstall}
+              isPwaInstallable={isInstallable}
+              isPwaInstalled={isInstalled}
             />
 
             {/* Mobile Controls Trigger Button */}
@@ -106,6 +125,13 @@ export const App: React.FC = () => {
 
       {/* Batch Cutout Studio Modal */}
       <BatchStudio isOpen={batchOpen} onClose={() => setBatchOpen(false)} />
+
+      {/* PWA Post-Export Celebration Modal */}
+      <PwaCelebrationModal
+        isOpen={showCelebration}
+        onClose={closeCelebration}
+        onInstall={promptInstall}
+      />
 
       {/* Compliance & Info Modals */}
       <PrivacyModal isOpen={privacyOpen} onClose={() => setPrivacyOpen(false)} />

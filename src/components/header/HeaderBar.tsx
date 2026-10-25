@@ -37,12 +37,20 @@ interface HeaderBarProps {
   stageRef: React.RefObject<Konva.Stage | null>;
   onNewImage: () => void;
   onOpenBatch?: () => void;
+  onExportSuccess?: () => void;
+  onInstallPwa?: () => void;
+  isPwaInstallable?: boolean;
+  isPwaInstalled?: boolean;
 }
 
 export const HeaderBar: React.FC<HeaderBarProps> = ({
   stageRef,
   onNewImage,
   onOpenBatch,
+  onExportSuccess,
+  onInstallPwa,
+  isPwaInstallable,
+  isPwaInstalled,
 }) => {
   const {
     aspectRatio,
@@ -105,6 +113,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
         targetDimensions: customDimensions || undefined,
         targetMaxSizeBytes: targetMaxSizeBytes || undefined,
       });
+      if (onExportSuccess) {
+        onExportSuccess();
+      }
     } catch (err) {
       console.error('Export failed:', err);
     } finally {
@@ -142,6 +153,17 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
           >
             <Layers className="w-3.5 h-3.5 text-brand-500" />
             <span className="hidden sm:inline">Batch Cutout</span>
+          </button>
+        )}
+
+        {isPwaInstallable && !isPwaInstalled && (
+          <button
+            onClick={onInstallPwa}
+            className="ml-1 sm:ml-2 px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:text-zinc-900 dark:hover:text-white bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-lg flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+            title="Install EverydayCut App to Home Screen"
+          >
+            <Download className="w-3.5 h-3.5 text-emerald-500" />
+            <span className="hidden sm:inline">Install App</span>
           </button>
         )}
       </div>

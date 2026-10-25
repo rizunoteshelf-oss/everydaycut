@@ -58,6 +58,9 @@ interface SidebarProps {
   onOpenAbout: () => void;
   isOpenOnMobile?: boolean;
   onCloseMobile?: () => void;
+  onInstallPwa?: () => void;
+  isPwaInstallable?: boolean;
+  isPwaInstalled?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -66,6 +69,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenAbout,
   isOpenOnMobile,
   onCloseMobile,
+  onInstallPwa,
+  isPwaInstallable,
+  isPwaInstalled,
 }) => {
   const {
     layers,
@@ -915,9 +921,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Footer Navigation & Legal Links */}
       <footer className="p-3 border-t border-borderDark text-[11px] text-zinc-500 dark:text-zinc-400 flex items-center justify-between shrink-0">
-        <button onClick={onOpenAbout} className="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
-          About
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={onOpenAbout} className="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
+            About
+          </button>
+          {isPwaInstallable && !isPwaInstalled && (
+            <>
+              <span className="text-zinc-400 dark:text-zinc-600">•</span>
+              <button
+                onClick={onInstallPwa}
+                className="text-brand-600 dark:text-brand-400 font-semibold hover:underline"
+              >
+                Install App
+              </button>
+            </>
+          )}
+          {isPwaInstalled && (
+            <>
+              <span className="text-zinc-400 dark:text-zinc-600">•</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-medium">Offline Ready ✓</span>
+            </>
+          )}
+        </div>
         <div className="flex items-center gap-3">
           <button onClick={onOpenPrivacy} className="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
             Privacy
