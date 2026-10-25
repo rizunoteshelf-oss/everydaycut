@@ -1,0 +1,6 @@
+# EverydayCut Robots File
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://everydaycut.com/sitemap.xml

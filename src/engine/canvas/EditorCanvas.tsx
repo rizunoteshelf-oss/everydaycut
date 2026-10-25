@@ -6,6 +6,8 @@ import { CanvasBackground } from './CanvasBackground.tsx';
 import { CanvasLayer } from './CanvasLayer.tsx';
 import { useStageZoom } from './useStageZoom.ts';
 import { CanvasDimensions } from '../state/types.ts';
+import { EraserOverlay } from './EraserOverlay.tsx';
+import { GuideOverlay } from './GuideOverlay.tsx';
 
 interface EditorCanvasProps {
   stageRef?: React.RefObject<Konva.Stage | null>;
@@ -26,13 +28,21 @@ export const EditorCanvas: React.FC<EditorCanvasProps> = ({ stageRef }) => {
     setContainerDimensions,
     zoom,
     setZoom,
+    editorMode,
+    setEditorMode,
+    guideOverlay,
+    customDimensions,
   } = useEditorStore();
 
   const { resetToFit } = useStageZoom();
   const [initialFitDone, setInitialFitDone] = useState(false);
 
-  // Compute stage dimensions based on selected aspect ratio
+  // Compute stage dimensions based on selected aspect ratio or custom tool presets
   const activeDimensions = useMemo<CanvasDimensions>(() => {
+    if (customDimensions) {
+      return customDimensions;
+    }
+
     const primaryLayer = layers[0];
     const baseW = primaryLayer?.originalWidth || 1080;
     const baseH = primaryLayer?.originalHeight || 1080;
@@ -115,7 +125,7 @@ export const EditorCanvas: React.FC<EditorCanvasProps> = ({ stageRef }) => {
   return (
     <div
       ref={containerRef}
-      className="relative flex-1 w-full h-full overflow-hidden bg-stage flex items-center justify-center p-8 select-none"
+      className="relative flex-1 w-full h-full overflow-hidden bg-stage flex items-center justify-center p-8 select-none z-0"
       onClick={(e) => {
         // Deselect if clicking the dark outer stage
         if (e.target === containerRef.current) {
@@ -169,6 +179,25 @@ export const EditorCanvas: React.FC<EditorCanvasProps> = ({ stageRef }) => {
             ))}
           </KonvaLayer>
         </Stage>
+
+        {/* Interactive Eraser Brush Overlay */}
+        {editorMode === 'eraser' && (
+          <EraserOverlay
+            width={activeDimensions.width}
+            height={activeDimensions.height}
+            scale={scale}
+            onClose={() => setEditorMode('select')}
+          />
+        )}
+
+        {/* Visual Alignment Guides (PAN Card Face, Signature, Passport, Amazon 85%, PFP) */}
+        {guideOverlay !== 'none' && (
+          <GuideOverlay
+            type={guideOverlay}
+            width={stageDisplayWidth}
+            height={stageDisplayHeight}
+          />
+        )}
       </div>
     </div>
   );

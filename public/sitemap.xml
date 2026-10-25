@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+  <!-- EverydayCut Root Application -->
+  <url>
+    <loc>https://everydaycut.com/</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- 1. AI Background Remover -->
+  <url>
+    <loc>https://everydaycut.com/#/background-remover</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+
+  <!-- 2. Magic Eraser (Inpainting) -->
+  <url>
+    <loc>https://everydaycut.com/#/magic-eraser</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 3. 2x / 4x Super-Resolution Upscaler -->
+  <url>
+    <loc>https://everydaycut.com/#/image-upscaler</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 4. PAN Card Photo Cropper (UTIITSL/NSDL 213x213 <30KB) -->
+  <url>
+    <loc>https://everydaycut.com/#/pan-card-photo-cropper</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+
+  <!-- 5. PAN Card Signature Cropper (400x200 <20KB) -->
+  <url>
+    <loc>https://everydaycut.com/#/pan-card-signature-cropper</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+
+  <!-- 6. Passport & Visa Photo Maker (600x600 2x2") -->
+  <url>
+    <loc>https://everydaycut.com/#/passport-photo-maker</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 7. Amazon 85% Product Stager -->
+  <url>
+    <loc>https://everydaycut.com/#/amazon-product-stager</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- 8. Shopify Product Studio -->
+  <url>
+    <loc>https://everydaycut.com/#/shopify-product-studio</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- 9. E-Commerce Badges Stager -->
+  <url>
+    <loc>https://everydaycut.com/#/ecommerce-sales-badges</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 10. Etsy & eBay Clean Stager -->
+  <url>
+    <loc>https://everydaycut.com/#/etsy-product-photo-cleaner</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 11. Profile Picture (PFP) Maker -->
+  <url>
+    <loc>https://everydaycut.com/#/profile-picture-maker</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- 12. Instagram Story Resizer (9:16) -->
+  <url>
+    <loc>https://everydaycut.com/#/instagram-story-resizer</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- 13. YouTube Thumbnail Creator (16:9) -->
+  <url>
+    <loc>https://everydaycut.com/#/youtube-thumbnail-maker</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- 14. Batch Cutout Studio (ZIP) -->
+  <url>
+    <loc>https://everydaycut.com/#/batch-background-remover</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 15. Format & Size Compressor -->
+  <url>
+    <loc>https://everydaycut.com/#/image-compressor-converter</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- 16. Pinterest Pin Optimizer (2:3) -->
+  <url>
+    <loc>https://everydaycut.com/#/pinterest-pin-maker</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 17. Crop & Aspect Ratio Studio -->
+  <url>
+    <loc>https://everydaycut.com/#/crop-image-aspect-ratio</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- 18. Bokeh / Background Blur -->
+  <url>
+    <loc>https://everydaycut.com/#/blur-background-bokeh</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- 19. Studio Shadows & Lighting -->
+  <url>
+    <loc>https://everydaycut.com/#/studio-shadows-lighting</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+</urlset>

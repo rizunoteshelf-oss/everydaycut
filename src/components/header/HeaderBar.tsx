@@ -10,6 +10,11 @@ import {
   Plus,
   ChevronDown,
   Ratio,
+  Layers,
+  Eraser,
+  Type,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useEditorStore } from '../../engine/state/editorStore.ts';
 import { useHistoryStore } from '../../engine/state/historyStore.ts';
@@ -24,14 +29,21 @@ const ASPECT_RATIOS: { id: AspectRatioPreset; label: string; desc: string }[] = 
   { id: '4:5', label: '4:5 Portrait', desc: 'Instagram feed' },
   { id: '9:16', label: '9:16 Story', desc: 'Reels / TikTok' },
   { id: '16:9', label: '16:9 Landscape', desc: 'YouTube / Web' },
+  { id: '3:4', label: '3:4 Vertical', desc: 'Standard portrait' },
+  { id: '4:3', label: '4:3 Standard', desc: 'Standard display' },
 ];
 
 interface HeaderBarProps {
   stageRef: React.RefObject<Konva.Stage | null>;
   onNewImage: () => void;
+  onOpenBatch?: () => void;
 }
 
-export const HeaderBar: React.FC<HeaderBarProps> = ({ stageRef, onNewImage }) => {
+export const HeaderBar: React.FC<HeaderBarProps> = ({
+  stageRef,
+  onNewImage,
+  onOpenBatch,
+}) => {
   const {
     aspectRatio,
     setAspectRatio,
@@ -39,6 +51,14 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ stageRef, onNewImage }) =>
     layers,
     undo,
     redo,
+    setEditorMode,
+    addTextLayer,
+    setActiveTab,
+    theme,
+    toggleTheme,
+    activePreset,
+    customDimensions,
+    targetMaxSizeBytes,
   } = useEditorStore();
 
   const { canUndo, canRedo } = useHistoryStore();
@@ -48,6 +68,29 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ stageRef, onNewImage }) =>
   const [showAspectMenu, setShowAspectMenu] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
 
+  const getPresetLabel = () => {
+    switch (activePreset) {
+      case 'pan_photo':
+        return '🇮🇳 PAN Photo (213×213 • <30KB)';
+      case 'pan_signature':
+        return '🇮🇳 PAN Signature (400×200 • <20KB)';
+      case 'passport':
+        return '🛂 Passport (600×600 px)';
+      case 'amazon':
+        return '🛒 Amazon Stager (1:1)';
+      case 'shopify':
+        return '🛍️ Shopify Stager';
+      case 'pfp_maker':
+        return '👤 Profile Avatar';
+      case 'instagram_story':
+        return '📱 Story (9:16)';
+      case 'youtube_thumb':
+        return '🖼️ YouTube (16:9)';
+      default:
+        return null;
+    }
+  };
+
   const handleExport = async (format: 'png' | 'jpeg') => {
     if (!stageRef.current) return;
     setIsExporting(true);
@@ -56,7 +99,11 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ stageRef, onNewImage }) =>
       await exportCanvasImage(stageRef.current, {
         format,
         quality: 0.98,
-        fileName: `everydaycut-${aspectRatio}-${Date.now()}`,
+        fileName: activePreset
+          ? `everydaycut-${activePreset}-${Date.now()}`
+          : `everydaycut-${aspectRatio}-${Date.now()}`,
+        targetDimensions: customDimensions || undefined,
+        targetMaxSizeBytes: targetMaxSizeBytes || undefined,
       });
     } catch (err) {
       console.error('Export failed:', err);
@@ -67,33 +114,50 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ stageRef, onNewImage }) =>
 
   return (
     <header className="h-14 bg-panel border-b border-borderDark px-4 flex items-center justify-between z-30 shrink-0">
-      {/* Left: Brand Identity */}
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-500">
+      {/* Left: Brand Identity & Batch Mode Trigger */}
+      <div className="flex items-center gap-3 shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-500 shrink-0">
           <Scissors className="w-4 h-4 text-brand-500" />
         </div>
-        <div className="flex flex-col">
-          <span className="font-bold text-sm tracking-tight text-white flex items-center gap-1.5">
+        <div className="flex flex-col shrink-0">
+          <span className="font-bold text-sm tracking-tight text-zinc-900 dark:text-white flex items-center gap-1.5 whitespace-nowrap">
             EverydayCut
-            <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-400 border border-brand-500/30">
-              Free & Client-Side
+            <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-600 dark:text-brand-400 border border-brand-500/30 whitespace-nowrap">
+              Free &amp; Client-Side
             </span>
           </span>
         </div>
+
+        {getPresetLabel() && (
+          <span className="hidden md:inline-flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full bg-brand-500/15 text-brand-600 dark:text-brand-400 border border-brand-500/30 shadow-sm">
+            {getPresetLabel()}
+          </span>
+        )}
+
+        {onOpenBatch && (
+          <button
+            onClick={onOpenBatch}
+            className="ml-1 sm:ml-2 px-2.5 py-1 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-zinc-900 dark:hover:text-white bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/30 rounded-lg flex items-center gap-1.5 transition-all shadow-sm"
+            title="Batch background removal with ZIP download"
+          >
+            <Layers className="w-3.5 h-3.5 text-brand-500" />
+            <span className="hidden sm:inline">Batch Cutout</span>
+          </button>
+        )}
       </div>
 
-      {/* Middle: Canvas Tools (Aspect Ratio, Undo/Redo, Zoom) */}
+      {/* Middle: Canvas Tools (Aspect Ratio, Quick Actions, Undo/Redo, Zoom) */}
       {layers.length > 0 && (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {/* Aspect Ratio Dropdown */}
           <div className="relative">
             <button
               onClick={() => setShowAspectMenu(!showAspectMenu)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-800/80 hover:bg-zinc-800 text-xs font-medium text-zinc-300 border border-zinc-700/60 transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-xs font-medium text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700/60 transition-colors"
             >
               <Ratio className="w-3.5 h-3.5 text-brand-500" />
               <span>{ASPECT_RATIOS.find((r) => r.id === aspectRatio)?.label}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
+              <ChevronDown className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
             </button>
 
             {showAspectMenu && (
@@ -105,8 +169,8 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ stageRef, onNewImage }) =>
                       setAspectRatio(item.id);
                       setShowAspectMenu(false);
                     }}
-                    className={`w-full px-3 py-2 text-left flex flex-col text-xs transition-colors hover:bg-zinc-800 ${
-                      aspectRatio === item.id ? 'text-brand-500 font-semibold' : 'text-zinc-300'
+                    className={`w-full px-3 py-2 text-left flex flex-col text-xs transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                      aspectRatio === item.id ? 'text-brand-500 font-semibold' : 'text-zinc-700 dark:text-zinc-300'
                     }`}
                   >
                     <span>{item.label}</span>
@@ -117,7 +181,30 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ stageRef, onNewImage }) =>
             )}
           </div>
 
-          <div className="h-4 w-px bg-zinc-800" />
+          {/* Quick Tool: Magic Eraser */}
+          <button
+            onClick={() => setEditorMode('eraser')}
+            className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-xs text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700/60 transition-colors"
+            title="Launch Magic Eraser Inpainting"
+          >
+            <Eraser className="w-3.5 h-3.5 text-brand-500" />
+            <span>Eraser</span>
+          </button>
+
+          {/* Quick Tool: Add Text Badge */}
+          <button
+            onClick={() => {
+              addTextLayer();
+              setActiveTab('text');
+            }}
+            className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-xs text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700/60 transition-colors"
+            title="Add Promotional Badge / Text"
+          >
+            <Type className="w-3.5 h-3.5 text-brand-500" />
+            <span>+ Badge</span>
+          </button>
+
+          <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
 
           {/* Undo / Redo */}
           <div className="flex items-center gap-1">
@@ -125,7 +212,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ stageRef, onNewImage }) =>
               onClick={undo}
               disabled={!canUndo}
               title="Undo (Ctrl+Z)"
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
             >
               <Undo2 className="w-4 h-4" />
             </button>
@@ -133,37 +220,37 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ stageRef, onNewImage }) =>
               onClick={redo}
               disabled={!canRedo}
               title="Redo (Ctrl+Shift+Z)"
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
             >
               <Redo2 className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="h-4 w-px bg-zinc-800" />
+          <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
 
           {/* Zoom Controls */}
-          <div className="flex items-center gap-1 bg-zinc-900/60 border border-zinc-800 rounded-lg p-0.5">
+          <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 rounded-lg p-0.5">
             <button
               onClick={zoomOut}
               title="Zoom Out (-)"
-              className="p-1 text-zinc-400 hover:text-white rounded transition-colors"
+              className="p-1 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white rounded transition-colors"
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
-            <span className="text-xs font-mono text-zinc-300 px-1 min-w-[42px] text-center">
+            <span className="text-xs font-mono text-zinc-800 dark:text-zinc-300 px-1 min-w-[42px] text-center">
               {zoom}%
             </span>
             <button
               onClick={zoomIn}
               title="Zoom In (+)"
-              className="p-1 text-zinc-400 hover:text-white rounded transition-colors"
+              className="p-1 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white rounded transition-colors"
             >
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={resetToFit}
               title="Fit to Screen"
-              className="p-1 text-zinc-400 hover:text-white rounded transition-colors ml-0.5"
+              className="p-1 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white rounded transition-colors ml-0.5"
             >
               <Maximize2 className="w-3.5 h-3.5" />
             </button>
@@ -171,12 +258,25 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ stageRef, onNewImage }) =>
         </div>
       )}
 
-      {/* Right: Actions (New & Export) */}
+      {/* Right: Actions (Theme Toggle, New & Export) */}
       <div className="flex items-center gap-2">
+        {/* Light / Dark Mode Toggle */}
+        <button
+          onClick={toggleTheme}
+          className="p-1.5 rounded-lg text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-700/60 transition-all shadow-sm"
+          title={`Switch to ${theme === 'dark' ? 'White/Light' : 'Dark'} Mode`}
+        >
+          {theme === 'dark' ? (
+            <Sun className="w-4 h-4 text-amber-400" />
+          ) : (
+            <Moon className="w-4 h-4 text-indigo-600" />
+          )}
+        </button>
+
         {layers.length > 0 && (
           <button
             onClick={onNewImage}
-            className="px-3 py-1.5 text-xs font-medium text-zinc-300 hover:text-white bg-zinc-800/80 hover:bg-zinc-800 border border-zinc-700/60 rounded-lg flex items-center gap-1.5 transition-colors"
+            className="px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/60 rounded-lg flex items-center gap-1.5 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New</span>
@@ -196,20 +296,31 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ stageRef, onNewImage }) =>
             </button>
 
             {showExportMenu && (
-              <div className="absolute right-0 mt-1 w-44 bg-panel border border-borderDark rounded-xl shadow-xl py-1 z-50">
+              <div className="absolute right-0 mt-1 w-48 bg-panel border border-borderDark rounded-xl shadow-xl py-1 z-50">
                 <button
                   onClick={() => handleExport('png')}
-                  className="w-full px-3 py-2 text-left flex flex-col text-xs text-zinc-200 hover:bg-zinc-800 transition-colors"
+                  className="w-full px-3 py-2 text-left flex flex-col text-xs text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                 >
-                  <span className="font-semibold text-white">PNG Image</span>
-                  <span className="text-[10px] text-zinc-400">Crisp transparent alpha HD</span>
+                  <span className="font-semibold text-zinc-900 dark:text-white">PNG Image</span>
+                  <span className="text-[10px] text-zinc-500 dark:text-zinc-400">Crisp transparent alpha HD</span>
                 </button>
                 <button
                   onClick={() => handleExport('jpeg')}
-                  className="w-full px-3 py-2 text-left flex flex-col text-xs text-zinc-200 hover:bg-zinc-800 transition-colors border-t border-zinc-800"
+                  className="w-full px-3 py-2 text-left flex flex-col text-xs text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors border-t border-zinc-200 dark:border-zinc-800"
                 >
-                  <span className="font-semibold text-white">JPEG Image</span>
-                  <span className="text-[10px] text-zinc-400">High quality solid/gradient</span>
+                  <span className="font-semibold text-zinc-900 dark:text-white flex items-center justify-between">
+                    <span>JPEG Image</span>
+                    {targetMaxSizeBytes && (
+                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold">
+                        &lt;{Math.round(targetMaxSizeBytes / 1000)}KB
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                    {targetMaxSizeBytes
+                      ? `Auto-compressed for government portal upload`
+                      : 'High quality solid/gradient'}
+                  </span>
                 </button>
               </div>
             )}

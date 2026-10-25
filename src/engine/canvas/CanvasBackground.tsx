@@ -10,14 +10,28 @@ interface CanvasBackgroundProps {
 export const CanvasBackground: React.FC<CanvasBackgroundProps> = ({ fill, dimensions }) => {
   const { width, height } = dimensions;
 
-  const gradientPoints = useMemo(() => {
+  const gradientConfig = useMemo(() => {
     if (fill.type !== 'gradient') return null;
-    const rad = (fill.gradient.angle * Math.PI) / 180;
+
+    const { startColor, midColor, endColor, angle, style = 'linear' } = fill.gradient;
+    const rad = (angle * Math.PI) / 180;
     const cx = width / 2;
     const cy = height / 2;
     const r = Math.sqrt(cx * cx + cy * cy);
 
+    // Compute color stops (2-stop or 3-stop)
+    let colorStops: Array<string | number>;
+    if (midColor && midColor.trim().length > 0) {
+      colorStops = [0, startColor, 0.5, midColor, 1, endColor];
+    } else {
+      colorStops = [0, startColor, 1, endColor];
+    }
+
     return {
+      style,
+      cx,
+      cy,
+      r,
       start: {
         x: cx - Math.cos(rad) * r,
         y: cy - Math.sin(rad) * r,
@@ -26,7 +40,7 @@ export const CanvasBackground: React.FC<CanvasBackgroundProps> = ({ fill, dimens
         x: cx + Math.cos(rad) * r,
         y: cy + Math.sin(rad) * r,
       },
-      colorStops: [0, fill.gradient.startColor, 1, fill.gradient.endColor],
+      colorStops,
     };
   }, [fill, width, height]);
 
@@ -49,7 +63,26 @@ export const CanvasBackground: React.FC<CanvasBackgroundProps> = ({ fill, dimens
     );
   }
 
-  if (fill.type === 'gradient' && gradientPoints) {
+  if (fill.type === 'gradient' && gradientConfig) {
+    if (gradientConfig.style === 'radial') {
+      return (
+        <Group name="background-layer">
+          <Rect
+            x={0}
+            y={0}
+            width={width}
+            height={height}
+            fillRadialGradientStartPoint={{ x: gradientConfig.cx, y: gradientConfig.cy }}
+            fillRadialGradientStartRadius={0}
+            fillRadialGradientEndPoint={{ x: gradientConfig.cx, y: gradientConfig.cy }}
+            fillRadialGradientEndRadius={gradientConfig.r}
+            fillRadialGradientColorStops={gradientConfig.colorStops}
+            listening={false}
+          />
+        </Group>
+      );
+    }
+
     return (
       <Group name="background-layer">
         <Rect
@@ -57,9 +90,9 @@ export const CanvasBackground: React.FC<CanvasBackgroundProps> = ({ fill, dimens
           y={0}
           width={width}
           height={height}
-          fillLinearGradientStartPoint={gradientPoints.start}
-          fillLinearGradientEndPoint={gradientPoints.end}
-          fillLinearGradientColorStops={gradientPoints.colorStops}
+          fillLinearGradientStartPoint={gradientConfig.start}
+          fillLinearGradientEndPoint={gradientConfig.end}
+          fillLinearGradientColorStops={gradientConfig.colorStops}
           listening={false}
         />
       </Group>
