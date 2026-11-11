@@ -3,4 +3,4 @@ User-agent: *
 Allow: /
 
 # Sitemaps
-Sitemap: https://everydaycut.com/sitemap.xml
+Sitemap: https://cut.everydaypdf.me/sitemap.xml

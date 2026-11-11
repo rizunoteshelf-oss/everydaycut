@@ -54,7 +54,7 @@ export const AboutModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
           </div>
 
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Engineered with modern web standards to provide high-performance computer vision and commercial-grade product photography tools freely to creators, store owners, and digital artists worldwide.
+            Engineered with modern web standards to provide high-performance computer vision and commercial-grade product photography tools freely to creators, store owners, and digital artists worldwide. Part of the privacy-first ecosystem alongside <a href="https://everydaypdf.me" target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">EverydayPDF.me (52+ free PDF tools)</a>.
           </p>
         </div>
 

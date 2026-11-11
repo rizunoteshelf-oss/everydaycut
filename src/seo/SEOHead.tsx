@@ -35,7 +35,8 @@ export const SEOHead: React.FC<SEOHeadProps> = ({ activeToolPreset }) => {
       link.href = href;
     };
 
-    const canonicalUrl = `https://everydaycut.com/#/${seo.slug}`;
+    const siteOrigin = 'https://cut.everydaypdf.me';
+    const canonicalUrl = `${siteOrigin}/#/${seo.slug}`;
 
     // 2. Standard Meta Tags
     setMetaTag('name', 'description', seo.metaDescription);
@@ -49,15 +50,15 @@ export const SEOHead: React.FC<SEOHeadProps> = ({ activeToolPreset }) => {
     setMetaTag('property', 'og:url', canonicalUrl);
     setMetaTag('property', 'og:type', 'website');
     setMetaTag('property', 'og:site_name', 'EverydayCut');
-    setMetaTag('property', 'og:image', 'https://everydaycut.com/samples/portrait.jpg');
+    setMetaTag('property', 'og:image', `${siteOrigin}/samples/portrait.jpg`);
 
     // 4. Twitter Card Tags
     setMetaTag('name', 'twitter:card', 'summary_large_image');
     setMetaTag('name', 'twitter:title', seo.title);
     setMetaTag('name', 'twitter:description', seo.metaDescription);
-    setMetaTag('name', 'twitter:image', 'https://everydaycut.com/samples/portrait.jpg');
+    setMetaTag('name', 'twitter:image', `${siteOrigin}/samples/portrait.jpg`);
 
-    // 5. Rich Schema.org JSON-LD (WebApplication + FAQPage + BreadcrumbList)
+    // 5. Rich Schema.org JSON-LD (SoftwareApplication + WebApplication + FAQPage + BreadcrumbList)
     let jsonLdScript = document.getElementById('everydaycut-jsonld') as HTMLScriptElement | null;
     if (!jsonLdScript) {
       jsonLdScript = document.createElement('script');
@@ -70,7 +71,8 @@ export const SEOHead: React.FC<SEOHeadProps> = ({ activeToolPreset }) => {
       '@context': 'https://schema.org',
       '@graph': [
         {
-          '@type': 'WebApplication',
+          '@type': 'SoftwareApplication',
+          '@id': `${siteOrigin}/#software`,
           name: 'EverydayCut',
           applicationCategory: 'MultimediaApplication',
           operatingSystem: 'All (Browser-Based WebGPU/WASM)',
@@ -115,7 +117,7 @@ export const SEOHead: React.FC<SEOHeadProps> = ({ activeToolPreset }) => {
               '@type': 'ListItem',
               position: 1,
               name: 'Home',
-              item: 'https://everydaycut.com/',
+              item: `${siteOrigin}/`,
             },
             {
               '@type': 'ListItem',

@@ -125,7 +125,7 @@ export const EditorCanvas: React.FC<EditorCanvasProps> = ({ stageRef }) => {
   return (
     <div
       ref={containerRef}
-      className="relative flex-1 w-full h-full overflow-hidden bg-stage flex items-center justify-center p-8 select-none z-0"
+      className="relative flex-1 w-full h-full overflow-hidden bg-stage flex items-center justify-center p-2 sm:p-4 md:p-8 select-none z-0 touch-none"
       onClick={(e) => {
         // Deselect if clicking the dark outer stage
         if (e.target === containerRef.current) {
@@ -139,6 +139,7 @@ export const EditorCanvas: React.FC<EditorCanvasProps> = ({ stageRef }) => {
         style={{
           width: stageDisplayWidth,
           height: stageDisplayHeight,
+          touchAction: 'none',
         }}
       >
         {/* CSS Checkerboard backdrop for transparent mode */}

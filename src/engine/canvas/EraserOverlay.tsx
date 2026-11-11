@@ -33,16 +33,27 @@ export const EraserOverlay: React.FC<EraserOverlayProps> = ({
     ctx.clearRect(0, 0, width, height);
   }, [width, height]);
 
-  const getCanvasCoords = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const getCanvasCoords = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / scale;
-    const y = (e.clientY - rect.top) / scale;
+    let clientX = 0;
+    let clientY = 0;
+    if ('touches' in e) {
+      if (e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      }
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+    const x = (clientX - rect.left) / scale;
+    const y = (clientY - rect.top) / scale;
     return { x, y };
   };
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -65,7 +76,7 @@ export const EraserOverlay: React.FC<EraserOverlayProps> = ({
     ctx.lineJoin = 'round';
   };
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -133,7 +144,7 @@ export const EraserOverlay: React.FC<EraserOverlayProps> = ({
 
   return (
     <div className="absolute inset-0 z-30 pointer-events-auto">
-      {/* Brush Paint Canvas */}
+      {/* Brush Paint Canvas with Touch & Mouse Inpainting Support */}
       <canvas
         ref={canvasRef}
         width={width}
@@ -141,12 +152,17 @@ export const EraserOverlay: React.FC<EraserOverlayProps> = ({
         style={{
           width: width * scale,
           height: height * scale,
+          touchAction: 'none',
         }}
         onMouseDown={startDrawing}
         onMouseMove={draw}
         onMouseUp={stopDrawing}
         onMouseLeave={stopDrawing}
-        className="cursor-crosshair absolute inset-0"
+        onTouchStart={startDrawing}
+        onTouchMove={draw}
+        onTouchEnd={stopDrawing}
+        onTouchCancel={stopDrawing}
+        className="cursor-crosshair absolute inset-0 touch-none"
       />
 
       {/* Floating Magic Eraser Toolbar */}

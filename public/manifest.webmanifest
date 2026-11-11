@@ -45,10 +45,10 @@
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "PAN Photo Cropper",
+      "name": "PAN Photo Resizer",
       "short_name": "PAN Photo",
-      "description": "213x213 px <30KB official compliance cropper",
-      "url": "/#/pan-card-photo-cropper",
+      "description": "213x213 px <30KB official compliance resizer",
+      "url": "/#/pan-card-photo-resizer",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]

@@ -922,6 +922,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Footer Navigation & Legal Links */}
       <footer className="p-3 border-t border-borderDark text-[11px] text-zinc-500 dark:text-zinc-400 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
+          <a
+            href="https://everydaypdf.me"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+            title="52+ Free PDF Tools"
+          >
+            EverydayPDF →
+          </a>
+          <span className="text-zinc-400 dark:text-zinc-600">•</span>
           <button onClick={onOpenAbout} className="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
             About
           </button>

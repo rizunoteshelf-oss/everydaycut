@@ -166,10 +166,30 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
             <span className="hidden sm:inline">Install App</span>
           </button>
         )}
+
+        {/* Cross-Promotion Pill with EverydayPDF */}
+        <a
+          href="https://everydaypdf.me"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hidden xl:inline-flex items-center gap-1.5 ml-2 px-2.5 py-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 rounded-lg transition-all shadow-sm"
+          title="Visit EverydayPDF.me - 52+ Free Client-Side PDF Tools"
+        >
+          <span>Need PDF tools? 52+ free tools at EverydayPDF.me →</span>
+        </a>
       </div>
 
-      {/* Middle: Canvas Tools (Aspect Ratio, Quick Actions, Undo/Redo, Zoom) */}
-      {layers.length > 0 && (
+      {/* Middle: Canvas Tools (Aspect Ratio, Quick Actions, Undo/Redo, Zoom) or Landing Promo */}
+      {layers.length === 0 ? (
+        <a
+          href="https://everydaypdf.me"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 transition-all shadow-sm hover:scale-[1.02]"
+        >
+          <span>Need PDF tools? 52+ free tools at EverydayPDF.me →</span>
+        </a>
+      ) : (
         <div className="flex items-center gap-2.5">
           {/* Aspect Ratio Dropdown */}
           <div className="relative">

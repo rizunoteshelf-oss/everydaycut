@@ -206,10 +206,18 @@ export const useEditorStore = create<EditorStoreState>((set, get) => ({
   },
 
   removeLayer: (id) => {
+    const target = get().layers.find((l) => l.id === id);
+    if (target?.src?.startsWith('blob:')) {
+      try {
+        URL.revokeObjectURL(target.src);
+      } catch {
+        // ignore
+      }
+    }
     get().recordSnapshot();
     set((state) => ({
       layers: state.layers.filter((l) => l.id !== id),
-      activeLayerId: state.activeLayerId === id ? (state.layers[0]?.id ?? null) : state.activeLayerId,
+      activeLayerId: state.activeLayerId === id ? (state.layers.find((l) => l.id !== id)?.id ?? null) : state.activeLayerId,
     }));
   },
 
@@ -490,6 +498,15 @@ export const useEditorStore = create<EditorStoreState>((set, get) => ({
   },
 
   reset: () => {
+    get().layers.forEach((l) => {
+      if (l.src?.startsWith('blob:')) {
+        try {
+          URL.revokeObjectURL(l.src);
+        } catch {
+          // ignore
+        }
+      }
+    });
     set({
       layers: [],
       activeLayerId: null,

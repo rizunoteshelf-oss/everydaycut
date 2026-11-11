@@ -69,6 +69,16 @@ export async function exportCanvasImage(
   // Temporarily deselect all transformers before rendering screenshot
   const transformers = stage.find('Transformer');
   transformers.forEach((tr) => tr.hide());
+
+  // Store previous scale and position so export is ALWAYS pristine 1:1 original canvas scale
+  const prevScaleX = stage.scaleX();
+  const prevScaleY = stage.scaleY();
+  const prevX = stage.x();
+  const prevY = stage.y();
+
+  // Reset stage to full 1:1 scale and origin for crystal-clear HD export
+  stage.scale({ x: 1, y: 1 });
+  stage.position({ x: 0, y: 0 });
   stage.batchDraw();
 
   try {
@@ -141,7 +151,9 @@ export async function exportCanvasImage(
       height: stage.height(),
     };
   } finally {
-    // Restore transformers
+    // Restore stage scale, position, and transformers
+    stage.scale({ x: prevScaleX, y: prevScaleY });
+    stage.position({ x: prevX, y: prevY });
     transformers.forEach((tr) => tr.show());
     stage.batchDraw();
   }

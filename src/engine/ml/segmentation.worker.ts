@@ -2,6 +2,7 @@ import { pipeline, env, RawImage } from '@huggingface/transformers';
 
 // Disable remote telemetry & local filesystem checks
 env.allowLocalModels = false;
+env.useBrowserCache = true;
 
 // Detect Safari / WebKit environment
 const isSafari = typeof navigator !== 'undefined' && (

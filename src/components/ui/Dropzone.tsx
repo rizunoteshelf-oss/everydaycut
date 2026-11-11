@@ -364,6 +364,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({
       // 1. Specialized handling for Signature Cropping (Monochrome high-contrast ink filter)
       if (presetId === 'pan_signature') {
         let srcUrl: string;
+        const isCreatedUrl = typeof fileOrUrl !== 'string';
         if (typeof fileOrUrl === 'string') {
           srcUrl = fileOrUrl;
         } else {
@@ -371,6 +372,9 @@ export const Dropzone: React.FC<DropzoneProps> = ({
         }
 
         const filtered = await processSignatureToMonochrome(srcUrl);
+        if (isCreatedUrl) {
+          URL.revokeObjectURL(srcUrl);
+        }
 
         const fitScale = Math.min(400 / filtered.width, 200 / filtered.height) * 0.85;
         const sigW = filtered.width * fitScale;
@@ -641,6 +645,17 @@ export const Dropzone: React.FC<DropzoneProps> = ({
         onChange={onFileSelected}
       />
 
+      {/* Ecosystem Cross-Link Pill with EverydayPDF */}
+      <a
+        href="https://everydaypdf.me"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 text-xs font-semibold mb-3 shadow-sm hover:scale-[1.02] transition-all cursor-pointer"
+        title="Visit EverydayPDF.me - 52+ Free In-Browser PDF Tools"
+      >
+        <span>Need PDF tools? 52+ free tools at EverydayPDF.me →</span>
+      </a>
+
       {/* Studio Header Badge */}
       <div className="text-center mb-6">
         <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-600 dark:text-brand-400 text-xs font-semibold mb-3">
@@ -848,8 +863,17 @@ export const Dropzone: React.FC<DropzoneProps> = ({
         </div>
       </div>
 
-      {/* Clean Legal & Compliance Footer for AdSense */}
-      <div className="mt-14 flex items-center justify-center gap-6 text-xs text-zinc-500 dark:text-zinc-400 pb-6">
+      {/* Clean Legal & Compliance Footer for AdSense & EverydayPDF Ecosystem */}
+      <div className="mt-14 flex items-center justify-center gap-6 text-xs text-zinc-500 dark:text-zinc-400 pb-6 flex-wrap">
+        <a
+          href="https://everydaypdf.me"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+        >
+          Need PDF tools? 52+ free tools at EverydayPDF.me →
+        </a>
+        <span>&bull;</span>
         <button onClick={onOpenAbout} className="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
           About EverydayCut
         </button>
