@@ -117,5 +117,6 @@ export type GuideOverlayType =
   | 'pan_signature'
   | 'passport_biometric'
   | 'circle_pfp'
-  | 'amazon_margin';
+  | 'amazon_margin'
+  | 'rule_of_thirds';
 

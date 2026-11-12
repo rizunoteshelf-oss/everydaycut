@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   X,
   UploadCloud,
@@ -22,6 +22,38 @@ export const BatchStudio: React.FC<BatchStudioProps> = ({ isOpen, onClose }) => 
   const [items, setItems] = useState<BatchItem[]>([]);
   const [isZipping, setIsZipping] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const itemsRef = useRef<BatchItem[]>(items);
+  itemsRef.current = items;
+
+  // Cleanup object URLs on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      itemsRef.current.forEach((item) => {
+        if (item.previewUrl) {
+          try {
+            URL.revokeObjectURL(item.previewUrl);
+          } catch (_) {}
+        }
+        if (item.cutoutUrl && item.cutoutUrl.startsWith('blob:')) {
+          try {
+            URL.revokeObjectURL(item.cutoutUrl);
+          } catch (_) {}
+        }
+      });
+    };
+  }, []);
+
+  // Keyboard Escape handler
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 

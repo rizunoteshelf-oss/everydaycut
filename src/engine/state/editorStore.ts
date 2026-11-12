@@ -32,8 +32,10 @@ interface EditorStoreState {
   guideOverlay: GuideOverlayType;
   customDimensions: CanvasDimensions | null;
   targetMaxSizeBytes: number | null;
+  autoCutoutDocument: boolean;
 
   // Actions
+  setAutoCutoutDocument: (enabled: boolean) => void;
   setLayers: (layers: Layer[]) => void;
   addLayer: (layer: Layer) => void;
   addTextLayer: (config?: Partial<TextConfig>) => void;
@@ -109,12 +111,14 @@ export const useEditorStore = create<EditorStoreState>((set, get) => ({
   guideOverlay: 'none',
   customDimensions: null,
   targetMaxSizeBytes: null,
+  autoCutoutDocument: true,
   segmentationProgress: {
     status: 'idle',
     progress: 0,
     message: '',
   },
 
+  setAutoCutoutDocument: (autoCutoutDocument) => set({ autoCutoutDocument }),
   setLayers: (layers) => set({ layers }),
 
   addLayer: (layer) => {
@@ -269,10 +273,19 @@ export const useEditorStore = create<EditorStoreState>((set, get) => ({
     switch (preset) {
       case 'crop':
         set({
-          guideOverlay: 'none',
+          guideOverlay: 'rule_of_thirds',
           customDimensions: null,
           aspectRatio: '1:1',
           activeTab: 'background',
+        });
+        break;
+
+      case 'converter':
+        set({
+          activeTab: 'enhance',
+          guideOverlay: 'none',
+          customDimensions: null,
+          targetMaxSizeBytes: null,
         });
         break;
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X, ShieldCheck } from 'lucide-react';
 
 interface ModalProps {
@@ -7,6 +7,15 @@ interface ModalProps {
 }
 
 export const PrivacyModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
@@ -15,16 +24,22 @@ export const PrivacyModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="privacy-dialog-title"
     >
       <div className="relative w-full max-w-xl max-h-[85vh] overflow-y-auto bg-panel border border-borderDark rounded-xl p-6 shadow-2xl text-zinc-700 dark:text-zinc-300 transition-colors duration-200">
         <div className="flex items-center justify-between pb-4 border-b border-borderDark">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-brand-500" />
-            <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Privacy Policy</h2>
+            <h2 id="privacy-dialog-title" className="text-lg font-bold text-zinc-900 dark:text-white">
+              Privacy Policy
+            </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-zinc-400 hover:text-zinc-900 dark:hover:text-white rounded-lg transition-colors"
+            aria-label="Close Privacy dialog"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-zinc-400 hover:text-zinc-900 dark:hover:text-white rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>

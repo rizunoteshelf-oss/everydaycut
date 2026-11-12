@@ -30,11 +30,33 @@ import { segmentationClient } from '../../engine/ml/segmentationClient.ts';
 import { useEditorStore } from '../../engine/state/editorStore.ts';
 import { Layer, ToolPresetId } from '../../engine/state/types.ts';
 import { processSignatureToMonochrome } from '../../engine/ml/signatureFilter.ts';
+import { getSEOEntryByPreset } from '../../seo/seoData.ts';
 
-// Fast direct image loader for instant, zero-latency RAM editing
+// Fast direct image loader with EXIF orientation normalization
 const loadImageElement = async (
   fileOrUrl: File | string
 ): Promise<{ src: string; width: number; height: number }> => {
+  if (typeof fileOrUrl !== 'string' && typeof createImageBitmap === 'function') {
+    try {
+      const bmp = await createImageBitmap(fileOrUrl, { imageOrientation: 'from-image' });
+      const canvas = document.createElement('canvas');
+      canvas.width = bmp.width;
+      canvas.height = bmp.height;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(bmp, 0, 0);
+        bmp.close();
+        return {
+          src: canvas.toDataURL('image/png'),
+          width: canvas.width,
+          height: canvas.height,
+        };
+      }
+    } catch (e) {
+      console.warn('createImageBitmap EXIF fallback:', e);
+    }
+  }
+
   let url: string;
   let isObjectUrl = false;
   if (typeof fileOrUrl === 'string') {
@@ -419,15 +441,201 @@ export const Dropzone: React.FC<DropzoneProps> = ({
         return;
       }
 
-      // 2. Instant In-RAM Processing (Zero AI network download, <50ms instant execution)
+      // 2. Specialized Dual-Layer Portrait Bokeh Engine
+      if (presetId === 'blur_bokeh') {
+        const origImg = await loadImageElement(fileOrUrl);
+        let cutoutUrl = origImg.src;
+        let cutW = origImg.width;
+        let cutH = origImg.height;
+
+        try {
+          const segResult = await segmentationClient.removeBackground(fileOrUrl);
+          cutoutUrl = segResult.cutoutUrl;
+          cutW = segResult.width;
+          cutH = segResult.height;
+        } catch (segErr) {
+          console.warn('AI Cutout fallback for bokeh:', segErr);
+        }
+
+        const now = Date.now();
+        const bgLayerId = `layer_bokeh_bg_${now}`;
+        const fgLayerId = `layer_bokeh_fg_${now + 1}`;
+
+        const bgLayer: Layer = {
+          id: bgLayerId,
+          type: 'image',
+          name: 'Background Photo (Blur Control)',
+          src: origImg.src,
+          originalWidth: origImg.width,
+          originalHeight: origImg.height,
+          x: 0,
+          y: 0,
+          width: origImg.width,
+          height: origImg.height,
+          scaleX: 1,
+          scaleY: 1,
+          rotation: 0,
+          visible: true,
+          shadow: { type: 'none', color: '#000000', blur: 0, x: 0, y: 0, opacity: 0 },
+          filters: { brightness: 0, contrast: 0, saturation: 0, blur: 14 },
+        };
+
+        const fgLayer: Layer = {
+          id: fgLayerId,
+          type: 'image',
+          name: 'Foreground Subject (Pin-Sharp)',
+          src: cutoutUrl,
+          originalWidth: cutW,
+          originalHeight: cutH,
+          x: 0,
+          y: 0,
+          width: cutW,
+          height: cutH,
+          scaleX: 1,
+          scaleY: 1,
+          rotation: 0,
+          visible: true,
+          shadow: { type: 'none', color: '#000000', blur: 0, x: 0, y: 0, opacity: 0 },
+          filters: { brightness: 0, contrast: 0, saturation: 0, blur: 0 },
+        };
+
+        addLayer(bgLayer);
+        addLayer(fgLayer);
+        useEditorStore.getState().setActiveLayerId(bgLayerId);
+        applyToolPreset('blur_bokeh');
+        return;
+      }
+
+      // 3. Specialized Instagram Story 9:16 Dual-Layer Composition
+      if (presetId === 'instagram_story') {
+        const img = await loadImageElement(fileOrUrl);
+        const targetW = 1080;
+        const targetH = 1920;
+
+        const coverScale = Math.max(targetW / img.width, targetH / img.height);
+        const coverW = img.width * coverScale;
+        const coverH = img.height * coverScale;
+
+        const containScale = Math.min(targetW / img.width, targetH / img.height) * 0.88;
+        const containW = img.width * containScale;
+        const containH = img.height * containScale;
+
+        const now = Date.now();
+        const bgLayerId = `layer_story_bg_${now}`;
+        const fgLayerId = `layer_story_fg_${now + 1}`;
+
+        const bgLayer: Layer = {
+          id: bgLayerId,
+          type: 'image',
+          name: 'Story Blurred Backdrop',
+          src: img.src,
+          originalWidth: img.width,
+          originalHeight: img.height,
+          x: (targetW - coverW) / 2,
+          y: (targetH - coverH) / 2,
+          width: coverW,
+          height: coverH,
+          scaleX: 1,
+          scaleY: 1,
+          rotation: 0,
+          visible: true,
+          shadow: { type: 'none', color: '#000000', blur: 0, x: 0, y: 0, opacity: 0 },
+          filters: { brightness: -10, contrast: 0, saturation: 0, blur: 24 },
+        };
+
+        const fgLayer: Layer = {
+          id: fgLayerId,
+          type: 'image',
+          name: 'Story Sharp Subject',
+          src: img.src,
+          originalWidth: img.width,
+          originalHeight: img.height,
+          x: (targetW - containW) / 2,
+          y: (targetH - containH) / 2,
+          width: containW,
+          height: containH,
+          scaleX: 1,
+          scaleY: 1,
+          rotation: 0,
+          visible: true,
+          shadow: { type: 'soft_shadow', color: '#000000', blur: 30, x: 0, y: 15, opacity: 0.4 },
+          filters: { brightness: 0, contrast: 0, saturation: 0, blur: 0 },
+        };
+
+        addLayer(bgLayer);
+        addLayer(fgLayer);
+        useEditorStore.getState().setActiveLayerId(fgLayerId);
+        applyToolPreset('instagram_story');
+        return;
+      }
+
+      // 4. Specialized Indian PAN & Passport Document Auto-White Cutout
+      if (presetId === 'pan_photo' || presetId === 'passport') {
+        const isPan = presetId === 'pan_photo';
+        const targetDim = isPan ? 213 : 600;
+        const scaleFactor = isPan ? 0.95 : 0.88;
+        const autoCutout = useEditorStore.getState().autoCutoutDocument;
+
+        let srcUrl: string;
+        let imgW: number;
+        let imgH: number;
+
+        if (autoCutout) {
+          try {
+            const segResult = await segmentationClient.removeBackground(fileOrUrl);
+            srcUrl = segResult.cutoutUrl;
+            imgW = segResult.width;
+            imgH = segResult.height;
+          } catch (e) {
+            console.warn('Document auto-cutout fallback to original:', e);
+            const raw = await loadImageElement(fileOrUrl);
+            srcUrl = raw.src;
+            imgW = raw.width;
+            imgH = raw.height;
+          }
+        } else {
+          const raw = await loadImageElement(fileOrUrl);
+          srcUrl = raw.src;
+          imgW = raw.width;
+          imgH = raw.height;
+        }
+
+        const scaleRatio = Math.min(targetDim / imgW, targetDim / imgH) * scaleFactor;
+        const layerW = imgW * scaleRatio;
+        const layerH = imgH * scaleRatio;
+        const layerX = (targetDim - layerW) / 2;
+        const layerY = (targetDim - layerH) / 2;
+
+        const docLayer: Layer = {
+          id: `layer_doc_${Date.now()}`,
+          type: 'image',
+          name: isPan ? 'PAN Photo (213×213 UTIITSL/NSDL)' : 'Passport Photo (600×600 Biometric)',
+          src: srcUrl,
+          originalWidth: imgW,
+          originalHeight: imgH,
+          x: layerX,
+          y: layerY,
+          width: layerW,
+          height: layerH,
+          scaleX: 1,
+          scaleY: 1,
+          rotation: 0,
+          visible: true,
+          shadow: { type: 'none', color: '#000000', blur: 0, x: 0, y: 0, opacity: 0 },
+          filters: { brightness: 0, contrast: 0, saturation: 0, blur: 0 },
+        };
+
+        addLayer(docLayer);
+        applyToolPreset(presetId);
+        return;
+      }
+
+      // 5. Instant In-RAM Processing (Zero AI network download, <50ms instant execution)
       const instantPresets: ToolPresetId[] = [
-        'pan_photo',
-        'passport',
         'crop',
         'eraser',
         'upscale',
         'converter',
-        'instagram_story',
         'youtube_thumb',
         'pinterest',
         'badges',
@@ -440,22 +648,10 @@ export const Dropzone: React.FC<DropzoneProps> = ({
         let targetCanvasH = img.height;
         let scaleRatio = 1;
 
-        if (presetId === 'pan_photo') {
-          targetCanvasW = 213;
-          targetCanvasH = 213;
-          scaleRatio = Math.min(213 / img.width, 213 / img.height) * 0.95;
-        } else if (presetId === 'passport') {
-          targetCanvasW = 600;
-          targetCanvasH = 600;
-          scaleRatio = Math.min(600 / img.width, 600 / img.height) * 0.88;
-        } else if (presetId === 'crop') {
+        if (presetId === 'crop') {
           targetCanvasW = img.width;
           targetCanvasH = img.height;
           scaleRatio = 1;
-        } else if (presetId === 'instagram_story') {
-          targetCanvasW = 1080;
-          targetCanvasH = 1920;
-          scaleRatio = Math.min(1080 / img.width, 1920 / img.height);
         } else if (presetId === 'youtube_thumb') {
           targetCanvasW = 1920;
           targetCanvasH = 1080;
@@ -478,12 +674,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({
         const newLayer: Layer = {
           id: `layer_${Date.now()}`,
           type: 'image',
-          name:
-            presetId === 'pan_photo'
-              ? 'PAN Photo (213×213 UTIITSL)'
-              : presetId === 'passport'
-              ? 'Passport Photo (600×600)'
-              : 'Uploaded Photo',
+          name: 'Uploaded Photo',
           src: img.src,
           originalWidth: img.width,
           originalHeight: img.height,
@@ -681,11 +872,16 @@ export const Dropzone: React.FC<DropzoneProps> = ({
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-700">
           {STUDIO_TOOLS.map((tool) => {
             const isCurrent = (activePreset || 'cutout') === tool.id;
+            const seo = getSEOEntryByPreset(tool.id);
             return (
-              <button
+              <a
                 key={tool.id}
-                type="button"
-                onClick={() => setStorePreset(tool.id)}
+                href={`/${seo.slug}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setStorePreset(tool.id);
+                  window.history.pushState(null, '', `/${seo.slug}`);
+                }}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-all shadow-sm cursor-pointer ${
                   isCurrent
                     ? 'bg-brand-500 text-black shadow-md scale-105 ring-2 ring-brand-500/30'
@@ -701,7 +897,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({
                     Hot
                   </span>
                 )}
-              </button>
+              </a>
             );
           })}
         </div>
@@ -848,10 +1044,16 @@ export const Dropzone: React.FC<DropzoneProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredTools.map((tool) => {
             const isSelected = activePreset === tool.id;
+            const seo = getSEOEntryByPreset(tool.id);
             return (
-              <div
+              <a
                 key={tool.id}
-                onClick={() => handleLaunchTool(tool.id)}
+                href={`/${seo.slug}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleLaunchTool(tool.id);
+                  window.history.pushState(null, '', `/${seo.slug}`);
+                }}
                 className={`p-5 rounded-2xl bg-panel border transition-all cursor-pointer flex flex-col justify-between group shadow-sm hover:shadow-md ${
                   isSelected
                     ? 'border-brand-500 ring-2 ring-brand-500/20'
@@ -883,18 +1085,13 @@ export const Dropzone: React.FC<DropzoneProps> = ({
                   </p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleLaunchTool(tool.id);
-                  }}
-                  className="w-full mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between text-xs font-semibold text-brand-600 dark:text-brand-400 group-hover:text-brand-500 group-hover:translate-x-1 transition-all cursor-pointer text-left"
+                <div
+                  className="w-full mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between text-xs font-semibold text-brand-600 dark:text-brand-400 group-hover:text-brand-500 group-hover:translate-x-1 transition-all text-left"
                 >
                   <span>{tool.actionText}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
+                </div>
+              </a>
             );
           })}
         </div>
@@ -911,15 +1108,24 @@ export const Dropzone: React.FC<DropzoneProps> = ({
           Need PDF tools? 52+ free tools at EverydayPDF.me →
         </a>
         <span>&bull;</span>
-        <button onClick={onOpenAbout} className="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
+        <button
+          onClick={onOpenAbout}
+          className="min-h-[44px] py-2 px-2 flex items-center hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors"
+        >
           About EverydayCut
         </button>
         <span>&bull;</span>
-        <button onClick={onOpenPrivacy} className="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
+        <button
+          onClick={onOpenPrivacy}
+          className="min-h-[44px] py-2 px-2 flex items-center hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors"
+        >
           Privacy Policy (100% In-Browser)
         </button>
         <span>&bull;</span>
-        <button onClick={onOpenTerms} className="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
+        <button
+          onClick={onOpenTerms}
+          className="min-h-[44px] py-2 px-2 flex items-center hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors"
+        >
           Terms of Service
         </button>
       </div>

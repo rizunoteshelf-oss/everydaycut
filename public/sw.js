@@ -1,7 +1,7 @@
 // EverydayCut Progressive Web App Service Worker (Two-Tier Offline Engine)
-const CACHE_NAME = 'everydaycut-core-v1';
+const CACHE_NAME = 'everydaycut-core-v2';
 
-// Tier 1 Core App Shell & Static Runtime Assets
+// Tier 1 Core App Shell & UI Static Assets (Zero heavy WASM in initial precache)
 const PRECACHE_URLS = [
   '/',
   '/index.html',
@@ -14,21 +14,16 @@ const PRECACHE_URLS = [
   '/samples/sneakers.jpg',
   '/samples/watch.jpg',
   '/samples/car.jpg',
-  '/wasm/ort-wasm-simd-threaded.jsep.mjs',
-  '/wasm/ort-wasm-simd-threaded.jsep.wasm',
-  '/wasm/ort-wasm-simd-threaded.mjs',
-  '/wasm/ort-wasm-simd-threaded.wasm',
 ];
 
-// Install Event: Pre-cache App Shell & Runtime
+// Install Event: Pre-cache App Shell & Runtime (<500 KB total payload)
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Use catch on each to avoid failing if a single asset is in-flight
       return Promise.all(
         PRECACHE_URLS.map((url) =>
           cache.add(url).catch((err) => {
-            console.warn(`[SW] Precache failed for ${url}:`, err);
+            console.warn(`[SW] Precache skipped for ${url}:`, err);
           })
         )
       );
@@ -51,7 +46,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch Event: Stale-While-Revalidate / Cache-First
+// Fetch Event: Intelligent Strategy Routing
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
@@ -61,8 +56,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 1. WASM & Large Static Binaries: Cache-First
-  if (url.pathname.includes('/wasm/') || url.pathname.endsWith('.wasm')) {
+  // 1. WASM Binaries & Hugging Face Neural Weights: Runtime Cache-First
+  // Downloaded on-demand when tool runs, then persisted offline
+  if (
+    url.pathname.includes('/wasm/') ||
+    url.pathname.endsWith('.wasm') ||
+    url.pathname.endsWith('.onnx') ||
+    url.hostname.includes('huggingface.co')
+  ) {
     event.respondWith(
       caches.match(event.request).then((cached) => {
         if (cached) return cached;

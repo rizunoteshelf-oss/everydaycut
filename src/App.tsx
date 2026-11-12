@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, Suspense } from 'react';
 import Konva from 'konva';
 import { Sliders } from 'lucide-react';
 import { useEditorStore } from './engine/state/editorStore.ts';
@@ -8,18 +8,31 @@ import { EditorCanvas } from './engine/canvas/EditorCanvas.tsx';
 import { Dropzone } from './components/ui/Dropzone.tsx';
 import { LoadingOverlay } from './components/ui/LoadingOverlay.tsx';
 import { AdBannerSlot } from './components/ads/AdBannerSlot.tsx';
-import { PrivacyModal } from './components/legal/PrivacyModal.tsx';
-import { TermsModal } from './components/legal/TermsModal.tsx';
-import { AboutModal } from './components/legal/AboutModal.tsx';
-import { BatchStudio } from './components/batch/BatchStudio.tsx';
 import { SEOHead } from './seo/SEOHead.tsx';
 import { getPresetBySlug, getSEOEntryByPreset } from './seo/seoData.ts';
 import { usePwaInstall } from './components/pwa/usePwaInstall.ts';
-import { PwaCelebrationModal } from './components/pwa/PwaCelebrationModal.tsx';
+import { CookieConsentBanner } from './components/legal/CookieConsentBanner.tsx';
+
+// Code-split heavy modal/feature modules to reduce initial JS payload
+const BatchStudio = React.lazy(() =>
+  import('./components/batch/BatchStudio.tsx').then((m) => ({ default: m.BatchStudio }))
+);
+const PrivacyModal = React.lazy(() =>
+  import('./components/legal/PrivacyModal.tsx').then((m) => ({ default: m.PrivacyModal }))
+);
+const TermsModal = React.lazy(() =>
+  import('./components/legal/TermsModal.tsx').then((m) => ({ default: m.TermsModal }))
+);
+const AboutModal = React.lazy(() =>
+  import('./components/legal/AboutModal.tsx').then((m) => ({ default: m.AboutModal }))
+);
+const PwaCelebrationModal = React.lazy(() =>
+  import('./components/pwa/PwaCelebrationModal.tsx').then((m) => ({ default: m.PwaCelebrationModal }))
+);
 
 export const App: React.FC = () => {
   const stageRef = useRef<Konva.Stage | null>(null);
-  const { layers, reset, activePreset, setActivePreset } = useEditorStore();
+  const { layers, reset, activePreset, setActivePreset, applyToolPreset } = useEditorStore();
 
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
@@ -37,30 +50,56 @@ export const App: React.FC = () => {
     triggerExportCelebration,
   } = usePwaInstall();
 
-  // Sync incoming route / hash on mount and hashchange
+  // Sync incoming route (History API clean path or legacy hash) on mount and popstate
   useEffect(() => {
-    const syncFromHash = () => {
+    const syncFromRoute = () => {
+      // 1. Check clean path first (e.g. /background-remover)
+      const path = window.location.pathname;
+      if (path && path !== '/') {
+        const preset = getPresetBySlug(path);
+        if (preset) {
+          setActivePreset(preset);
+          applyToolPreset(preset);
+          return;
+        }
+      }
+
+      // 2. Fallback to legacy hash (e.g. #/background-remover)
       const hash = window.location.hash;
       if (hash) {
         const preset = getPresetBySlug(hash);
         if (preset) {
           setActivePreset(preset);
+          applyToolPreset(preset);
+          // Clean up URL in address bar to clean path
+          const cleanSlug = hash.replace(/^#?\/?/, '').trim();
+          window.history.replaceState(null, '', `/${cleanSlug}`);
         }
       }
     };
 
-    syncFromHash();
-    window.addEventListener('hashchange', syncFromHash);
-    return () => window.removeEventListener('hashchange', syncFromHash);
-  }, [setActivePreset]);
+    syncFromRoute();
+    window.addEventListener('popstate', syncFromRoute);
+    window.addEventListener('hashchange', syncFromRoute);
+    return () => {
+      window.removeEventListener('popstate', syncFromRoute);
+      window.removeEventListener('hashchange', syncFromRoute);
+    };
+  }, [setActivePreset, applyToolPreset]);
 
-  // Sync URL hash when active preset changes in editor
+  // Sync URL clean path when active preset changes in editor
   useEffect(() => {
-    const seo = getSEOEntryByPreset(activePreset);
-    if (seo) {
-      const targetHash = `#/${seo.slug}`;
-      if (window.location.hash !== targetHash) {
-        window.history.replaceState(null, '', targetHash);
+    if (activePreset) {
+      const seo = getSEOEntryByPreset(activePreset);
+      if (seo) {
+        const targetPath = `/${seo.slug}`;
+        if (window.location.pathname !== targetPath) {
+          window.history.pushState(null, '', targetPath);
+        }
+      }
+    } else {
+      if (window.location.pathname !== '/') {
+        window.history.pushState(null, '', '/');
       }
     }
   }, [activePreset]);
@@ -94,6 +133,7 @@ export const App: React.FC = () => {
           <>
             <EditorCanvas stageRef={stageRef} />
             <Sidebar
+              stageRef={stageRef}
               onOpenPrivacy={() => setPrivacyOpen(true)}
               onOpenTerms={() => setTermsOpen(true)}
               onOpenAbout={() => setAboutOpen(true)}
@@ -123,20 +163,23 @@ export const App: React.FC = () => {
       {/* Background Segmentation Progress Modal */}
       <LoadingOverlay />
 
-      {/* Batch Cutout Studio Modal */}
-      <BatchStudio isOpen={batchOpen} onClose={() => setBatchOpen(false)} />
+      {/* Lazy Modals wrapped in Suspense */}
+      <Suspense fallback={null}>
+        {batchOpen && <BatchStudio isOpen={batchOpen} onClose={() => setBatchOpen(false)} />}
+        {showCelebration && (
+          <PwaCelebrationModal
+            isOpen={showCelebration}
+            onClose={closeCelebration}
+            onInstall={promptInstall}
+          />
+        )}
+        {privacyOpen && <PrivacyModal isOpen={privacyOpen} onClose={() => setPrivacyOpen(false)} />}
+        {termsOpen && <TermsModal isOpen={termsOpen} onClose={() => setTermsOpen(false)} />}
+        {aboutOpen && <AboutModal isOpen={aboutOpen} onClose={() => setAboutOpen(false)} />}
+      </Suspense>
 
-      {/* PWA Post-Export Celebration Modal */}
-      <PwaCelebrationModal
-        isOpen={showCelebration}
-        onClose={closeCelebration}
-        onInstall={promptInstall}
-      />
-
-      {/* Compliance & Info Modals */}
-      <PrivacyModal isOpen={privacyOpen} onClose={() => setPrivacyOpen(false)} />
-      <TermsModal isOpen={termsOpen} onClose={() => setTermsOpen(false)} />
-      <AboutModal isOpen={aboutOpen} onClose={() => setAboutOpen(false)} />
+      {/* Lightweight GDPR/ePrivacy & Consent Mode v2 Banner */}
+      <CookieConsentBanner onOpenPrivacy={() => setPrivacyOpen(true)} />
     </div>
   );
 };

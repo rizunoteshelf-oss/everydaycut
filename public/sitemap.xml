@@ -3,7 +3,6 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
-  <!-- EverydayCut Root Application -->
   <url>
     <loc>https://cut.everydaypdf.me/</loc>
     <lastmod>2026-11-12</lastmod>
@@ -11,155 +10,136 @@
     <priority>1.0</priority>
   </url>
 
-  <!-- 1. AI Background Remover -->
   <url>
-    <loc>https://cut.everydaypdf.me/#/background-remover</loc>
+    <loc>https://cut.everydaypdf.me/background-remover</loc>
     <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
   </url>
 
-  <!-- 2. Magic Eraser (Inpainting) -->
   <url>
-    <loc>https://cut.everydaypdf.me/#/magic-eraser</loc>
+    <loc>https://cut.everydaypdf.me/magic-eraser</loc>
     <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
-  <!-- 3. 2x / 4x Super-Resolution Upscaler -->
   <url>
-    <loc>https://cut.everydaypdf.me/#/image-upscaler</loc>
+    <loc>https://cut.everydaypdf.me/image-upscaler</loc>
     <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
-  <!-- 4. PAN Card Photo Resizer (UTIITSL/NSDL 213x213 <30KB) -->
   <url>
-    <loc>https://cut.everydaypdf.me/#/pan-card-photo-resizer</loc>
+    <loc>https://cut.everydaypdf.me/pan-card-photo-resizer</loc>
     <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
   </url>
 
-  <!-- 5. PAN Card Signature Cropper (400x200 <20KB) -->
   <url>
-    <loc>https://cut.everydaypdf.me/#/pan-card-signature-cropper</loc>
-    <lastmod>2026-11-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.95</priority>
-  </url>
-
-  <!-- 6. Passport & Visa Photo Maker (600x600 2x2") -->
-  <url>
-    <loc>https://cut.everydaypdf.me/#/passport-photo-maker</loc>
+    <loc>https://cut.everydaypdf.me/pan-card-signature-cropper</loc>
     <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
-  <!-- 7. Amazon Product Photo Stager (85% Rule Pure White) -->
   <url>
-    <loc>https://cut.everydaypdf.me/#/amazon-product-photo-stager</loc>
+    <loc>https://cut.everydaypdf.me/passport-photo-maker</loc>
     <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
-  <!-- 8. Shopify Product Studio (Pedestal & Ambient Shadow) -->
   <url>
-    <loc>https://cut.everydaypdf.me/#/shopify-product-studio</loc>
+    <loc>https://cut.everydaypdf.me/amazon-product-photo-stager</loc>
     <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
-  <!-- 9. Profile Picture (PFP) Maker & Glow Studio -->
   <url>
-    <loc>https://cut.everydaypdf.me/#/profile-picture-maker</loc>
+    <loc>https://cut.everydaypdf.me/shopify-product-studio</loc>
     <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
+    <priority>0.9</priority>
   </url>
 
-  <!-- 10. Batch Background Remover (.ZIP Download) -->
   <url>
-    <loc>https://cut.everydaypdf.me/#/batch-background-remover</loc>
+    <loc>https://cut.everydaypdf.me/profile-picture-maker</loc>
     <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
+    <priority>0.9</priority>
   </url>
 
-  <!-- 11. E-Commerce Badges & Sales Stamps -->
   <url>
-    <loc>https://cut.everydaypdf.me/#/ecommerce-sales-badges</loc>
+    <loc>https://cut.everydaypdf.me/batch-background-remover</loc>
     <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
+    <priority>0.9</priority>
   </url>
 
-  <!-- 12. Etsy & eBay Product Stager -->
   <url>
-    <loc>https://cut.everydaypdf.me/#/etsy-product-stager</loc>
+    <loc>https://cut.everydaypdf.me/ecommerce-sales-badges</loc>
     <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
+    <priority>0.9</priority>
   </url>
 
-  <!-- 13. Instagram Story & Reel 9:16 Resizer -->
   <url>
-    <loc>https://cut.everydaypdf.me/#/instagram-story-resizer</loc>
+    <loc>https://cut.everydaypdf.me/etsy-product-stager</loc>
     <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
+    <priority>0.9</priority>
   </url>
 
-  <!-- 14. YouTube Thumbnail Pop-Out Maker (16:9) -->
   <url>
-    <loc>https://cut.everydaypdf.me/#/youtube-thumbnail-popout</loc>
+    <loc>https://cut.everydaypdf.me/instagram-story-resizer</loc>
     <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
+    <priority>0.9</priority>
   </url>
 
-  <!-- 15. Pinterest Pin 2:3 Vertical Optimizer -->
   <url>
-    <loc>https://cut.everydaypdf.me/#/pinterest-pin-optimizer</loc>
+    <loc>https://cut.everydaypdf.me/youtube-thumbnail-popout</loc>
     <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
+    <priority>0.9</priority>
   </url>
 
-  <!-- 16. Smart Image Compressor & Format Converter -->
   <url>
-    <loc>https://cut.everydaypdf.me/#/image-compressor-converter</loc>
+    <loc>https://cut.everydaypdf.me/pinterest-pin-optimizer</loc>
     <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
+    <priority>0.9</priority>
   </url>
 
-  <!-- 17. Lossless Image Cropper & Aspect Ratio Studio -->
   <url>
-    <loc>https://cut.everydaypdf.me/#/crop-image-aspect-ratio</loc>
+    <loc>https://cut.everydaypdf.me/image-compressor-converter</loc>
     <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
+    <priority>0.9</priority>
   </url>
 
-  <!-- 18. DSLR Bokeh & Background Blur Studio -->
   <url>
-    <loc>https://cut.everydaypdf.me/#/blur-background-bokeh</loc>
+    <loc>https://cut.everydaypdf.me/crop-image-aspect-ratio</loc>
     <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
+    <priority>0.9</priority>
   </url>
 
-  <!-- 19. Studio Drop & Ambient Ground Shadows -->
   <url>
-    <loc>https://cut.everydaypdf.me/#/studio-shadows-lighting</loc>
+    <loc>https://cut.everydaypdf.me/blur-background-bokeh</loc>
     <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://cut.everydaypdf.me/studio-shadows-lighting</loc>
+    <lastmod>2026-11-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
 </urlset>

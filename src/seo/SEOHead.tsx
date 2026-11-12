@@ -36,7 +36,7 @@ export const SEOHead: React.FC<SEOHeadProps> = ({ activeToolPreset }) => {
     };
 
     const siteOrigin = 'https://cut.everydaypdf.me';
-    const canonicalUrl = `${siteOrigin}/#/${seo.slug}`;
+    const canonicalUrl = activeToolPreset && seo.slug ? `${siteOrigin}/${seo.slug}` : `${siteOrigin}/`;
 
     // 2. Standard Meta Tags
     setMetaTag('name', 'description', seo.metaDescription);
@@ -58,7 +58,8 @@ export const SEOHead: React.FC<SEOHeadProps> = ({ activeToolPreset }) => {
     setMetaTag('name', 'twitter:description', seo.metaDescription);
     setMetaTag('name', 'twitter:image', `${siteOrigin}/samples/portrait.jpg`);
 
-    // 5. Rich Schema.org JSON-LD (SoftwareApplication + WebApplication + FAQPage + BreadcrumbList)
+    // 5. Clean Schema.org JSON-LD (SoftwareApplication + WebApplication + FAQPage + BreadcrumbList)
+    // Removed fabricated aggregateRating per Google Search Essentials guidelines
     let jsonLdScript = document.getElementById('everydaycut-jsonld') as HTMLScriptElement | null;
     if (!jsonLdScript) {
       jsonLdScript = document.createElement('script');
@@ -85,19 +86,12 @@ export const SEOHead: React.FC<SEOHeadProps> = ({ activeToolPreset }) => {
           featureList: [
             '100% In-Browser AI Background Removal',
             'Zero Cloud Uploads & Local RAM Privacy',
-            'Bicubic Unsharp Masking 4K Upscaler',
+            'High-Precision 4K Clarity Upscaler',
             'Fast Marching Magic Eraser Inpainting',
             'Advanced Multi-Stop Linear & Radial Gradient Studio',
             'Government Official ID Presets (PAN Card & Passport)',
             'E-Commerce 85% Rule Staging for Amazon & Shopify',
           ],
-          aggregateRating: {
-            '@type': 'AggregateRating',
-            ratingValue: '4.9',
-            reviewCount: '14820',
-            bestRating: '5',
-            worstRating: '1',
-          },
         },
         {
           '@type': 'FAQPage',
@@ -119,19 +113,21 @@ export const SEOHead: React.FC<SEOHeadProps> = ({ activeToolPreset }) => {
               name: 'Home',
               item: `${siteOrigin}/`,
             },
-            {
-              '@type': 'ListItem',
-              position: 2,
-              name: seo.h1,
-              item: canonicalUrl,
-            },
+            ...(activeToolPreset && seo.slug ? [
+              {
+                '@type': 'ListItem',
+                position: 2,
+                name: seo.h1,
+                item: canonicalUrl,
+              },
+            ] : []),
           ],
         },
       ],
     };
 
     jsonLdScript.textContent = JSON.stringify(structuredData, null, 2);
-  }, [seo]);
+  }, [seo, activeToolPreset]);
 
   // Semantic SEO DOM node for crawler indexing (accessible to search engine spiders)
   return (

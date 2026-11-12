@@ -295,6 +295,74 @@ export const GuideOverlay: React.FC<GuideOverlayProps> = ({ type, width, height 
           </text>
         </svg>
       )}
+
+      {/* 6. Rule of Thirds Grid for Lossless Cropper */}
+      {type === 'rule_of_thirds' && (
+        <svg
+          className="w-full h-full"
+          viewBox={`0 0 ${width} ${height}`}
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* Vertical 1/3 and 2/3 lines */}
+          <line
+            x1={width / 3}
+            y1={0}
+            x2={width / 3}
+            y2={height}
+            stroke="rgba(255, 255, 255, 0.45)"
+            strokeWidth="1"
+            strokeDasharray="4 4"
+          />
+          <line
+            x1={(width * 2) / 3}
+            y1={0}
+            x2={(width * 2) / 3}
+            y2={height}
+            stroke="rgba(255, 255, 255, 0.45)"
+            strokeWidth="1"
+            strokeDasharray="4 4"
+          />
+          {/* Horizontal 1/3 and 2/3 lines */}
+          <line
+            x1={0}
+            y1={height / 3}
+            x2={width}
+            y2={height / 3}
+            stroke="rgba(255, 255, 255, 0.45)"
+            strokeWidth="1"
+            strokeDasharray="4 4"
+          />
+          <line
+            x1={0}
+            y1={(height * 2) / 3}
+            x2={width}
+            y2={(height * 2) / 3}
+            stroke="rgba(255, 255, 255, 0.45)"
+            strokeWidth="1"
+            strokeDasharray="4 4"
+          />
+          {/* Subtle Label Badge */}
+          <rect
+            x={width / 2 - 45}
+            y={12}
+            width="90"
+            height="18"
+            rx="9"
+            fill="rgba(0, 0, 0, 0.65)"
+          />
+          <text
+            x={width / 2}
+            y={24}
+            fill="#22c55e"
+            fontSize="9"
+            fontWeight="bold"
+            textAnchor="middle"
+            fontFamily="Inter, sans-serif"
+          >
+            RULE OF THIRDS
+          </text>
+        </svg>
+      )}
     </div>
   );
 };

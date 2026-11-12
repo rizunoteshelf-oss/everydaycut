@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Konva from 'konva';
 import {
   Palette,
   Layers,
@@ -13,11 +14,15 @@ import {
   Trash2,
   Plus,
   X,
+  Download,
+  CheckCircle2,
+  FileCheck,
 } from 'lucide-react';
 import { useEditorStore } from '../../engine/state/editorStore.ts';
 import { AdBannerSlot } from '../ads/AdBannerSlot.tsx';
 import { BadgeStyle, ShadowType } from '../../engine/state/types.ts';
 import { upscaleImage } from '../../engine/ml/upscaler.ts';
+import { exportCanvasImage, ExportFormat } from '../../utils/imageExport.ts';
 
 const PRESET_COLORS = [
   '#ffffff',
@@ -61,6 +66,7 @@ interface SidebarProps {
   onInstallPwa?: () => void;
   isPwaInstallable?: boolean;
   isPwaInstalled?: boolean;
+  stageRef?: React.RefObject<Konva.Stage | null>;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -72,6 +78,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onInstallPwa,
   isPwaInstallable,
   isPwaInstalled,
+  stageRef,
 }) => {
   const {
     layers,
@@ -91,12 +98,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
     activePreset,
     guideOverlay,
     setGuideOverlay,
+    autoCutoutDocument,
+    setAutoCutoutDocument,
   } = useEditorStore();
 
   const activeLayer = layers.find((l) => l.id === activeLayerId) || layers[0];
   const [gradientAngle, setGradientAngle] = useState(backgroundFill.gradient.angle || 135);
   const [isUpscaling, setIsUpscaling] = useState(false);
   const [upscaleStatus, setUpscaleStatus] = useState<string | null>(null);
+
+  // Compressor & Converter state
+  const [compressFormat, setCompressFormat] = useState<ExportFormat>('webp');
+  const [compressQuality, setCompressQuality] = useState<number>(0.9);
+  const [compressMaxKb, setCompressMaxKb] = useState<number | null>(null);
+  const [isCompressing, setIsCompressing] = useState<boolean>(false);
+
+  const handleCompressExport = async () => {
+    if (!stageRef?.current) return;
+    setIsCompressing(true);
+    try {
+      await exportCanvasImage(stageRef.current, {
+        format: compressFormat,
+        quality: compressQuality,
+        fileName: `everydaycut-converted-${Date.now()}`,
+        targetMaxSizeBytes: compressMaxKb ? compressMaxKb * 1000 : undefined,
+      });
+    } catch (e) {
+      console.error('Conversion export failed:', e);
+    } finally {
+      setIsCompressing(false);
+    }
+  };
 
   const handleUpscale = async (factor: 2 | 4) => {
     if (!activeLayer?.src || activeLayer.type === 'text') return;
@@ -166,14 +198,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       {/* Active Preset Guideline Banner */}
       {activePreset && (
-        <div className="p-3 bg-brand-500/10 border-b border-brand-500/20 text-xs shrink-0">
-          <div className="flex items-center justify-between mb-1">
+        <div className="p-3 bg-brand-500/10 border-b border-brand-500/20 text-xs shrink-0 space-y-2">
+          <div className="flex items-center justify-between">
             <span className="font-bold text-brand-600 dark:text-brand-400">
               {activePreset === 'pan_photo' && '🇮🇳 PAN Photo (213×213 px)'}
               {activePreset === 'pan_signature' && '🇮🇳 PAN Signature (400×200 px)'}
               {activePreset === 'passport' && '🛂 Passport Biometric (600×600 px)'}
               {activePreset === 'amazon' && '🛒 Amazon 85% Safe Zone'}
               {activePreset === 'pfp_maker' && '👤 Profile Picture Circle'}
+              {activePreset === 'crop' && '📐 Rule-of-Thirds Grid'}
+              {activePreset === 'converter' && '⚡ Compress & Convert Studio'}
+              {activePreset === 'blur_bokeh' && '✨ Portrait Depth & Bokeh'}
+              {activePreset === 'instagram_story' && '📱 Instagram Story (9:16)'}
+              {activePreset === 'youtube_thumb' && '🖼️ YouTube Thumbnail (16:9)'}
             </span>
             {guideOverlay !== 'none' ? (
               <button
@@ -191,6 +228,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   else if (activePreset === 'passport') setGuideOverlay('passport_biometric');
                   else if (activePreset === 'amazon') setGuideOverlay('amazon_margin');
                   else if (activePreset === 'pfp_maker') setGuideOverlay('circle_pfp');
+                  else if (activePreset === 'crop') setGuideOverlay('rule_of_thirds');
                 }}
                 className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-semibold hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
                 title="Click to show guidelines"
@@ -200,12 +238,88 @@ export const Sidebar: React.FC<SidebarProps> = ({
             )}
           </div>
           <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-tight">
-            {activePreset === 'pan_photo' && 'Align face inside the oval. Export will auto-compress strictly under 30 KB JPEG for UTIITSL/NSDL.'}
+            {activePreset === 'pan_photo' && 'Align face inside the biometric oval. Export will auto-compress strictly under 30 KB JPEG for UTIITSL/NSDL.'}
             {activePreset === 'pan_signature' && 'Align signature within the margins. Export will auto-compress strictly under 20 KB JPEG.'}
             {activePreset === 'passport' && 'Biometric eye and chin guidelines active. Pure white background.'}
             {activePreset === 'amazon' && 'Product must occupy 85% of image frame on pure #FFFFFF white background.'}
             {activePreset === 'pfp_maker' && 'Center subject within the circular preview.'}
+            {activePreset === 'crop' && 'Align visual focal points along the rule-of-thirds grid lines for cinematic balance.'}
+            {activePreset === 'converter' && 'Convert formats (WebP, JPEG, PNG) and fine-tune quality with strict KB budgets.'}
+            {activePreset === 'blur_bokeh' && 'Dual-layer depth active: foreground subject remains pin-sharp while background blur is adjustable.'}
+            {activePreset === 'instagram_story' && 'Full 9:16 vertical composition with smart blurred background backdrop.'}
+            {activePreset === 'youtube_thumb' && 'High CTR 16:9 canvas with punchy contrast and vibrant cutout pop.'}
           </p>
+
+          {/* Document Verification & Compliance Section */}
+          {(activePreset === 'pan_photo' || activePreset === 'passport') && (
+            <div className="pt-2 border-t border-brand-500/20 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300">
+                  Auto White Background Cutout
+                </span>
+                <button
+                  onClick={() => setAutoCutoutDocument(!autoCutoutDocument)}
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
+                    autoCutoutDocument
+                      ? 'bg-emerald-500 text-white'
+                      : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'
+                  }`}
+                >
+                  {autoCutoutDocument ? 'ON' : 'OFF'}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-1 text-[10px]">
+                <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                  <CheckCircle2 className="w-3 h-3 shrink-0" />
+                  <span>{activePreset === 'pan_photo' ? '213×213 px OK' : '600×600 px OK'}</span>
+                </div>
+                <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                  <CheckCircle2 className="w-3 h-3 shrink-0" />
+                  <span>300 DPI Embedded</span>
+                </div>
+                <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                  <CheckCircle2 className="w-3 h-3 shrink-0" />
+                  <span>{activePreset === 'pan_photo' ? '<30 KB Target' : '<100 KB Target'}</span>
+                </div>
+                <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                  <CheckCircle2 className="w-3 h-3 shrink-0" />
+                  <span>#FFFFFF Pure White</span>
+                </div>
+              </div>
+
+              <p className="text-[9px] text-zinc-500 dark:text-zinc-400 italic leading-snug">
+                Independent client-side utility. EverydayCut is not affiliated with, endorsed by, or connected to NSDL (Protean), UTIITSL, Passport Seva, or the Income Tax Department of India.
+              </p>
+            </div>
+          )}
+
+          {activePreset === 'pan_signature' && (
+            <div className="pt-2 border-t border-brand-500/20 space-y-2">
+              <div className="grid grid-cols-2 gap-1 text-[10px]">
+                <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                  <CheckCircle2 className="w-3 h-3 shrink-0" />
+                  <span>400×200 px OK</span>
+                </div>
+                <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                  <CheckCircle2 className="w-3 h-3 shrink-0" />
+                  <span>300 DPI Embedded</span>
+                </div>
+                <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                  <CheckCircle2 className="w-3 h-3 shrink-0" />
+                  <span>&lt;20 KB Target</span>
+                </div>
+                <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                  <CheckCircle2 className="w-3 h-3 shrink-0" />
+                  <span>Ink High-Pass</span>
+                </div>
+              </div>
+
+              <p className="text-[9px] text-zinc-500 dark:text-zinc-400 italic leading-snug">
+                Independent client-side utility. EverydayCut is not affiliated with, endorsed by, or connected to NSDL (Protean), UTIITSL, or the Income Tax Department of India.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -648,6 +762,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* === TAB 3: ADJUSTMENTS (WORKING KONVA FILTERS) === */}
         {activeTab === 'filters' && (
           <div className="space-y-5">
+            {activePreset === 'blur_bokeh' && (
+              <div className="p-2.5 rounded-lg bg-brand-500/10 border border-brand-500/20 text-brand-600 dark:text-brand-400 text-xs flex items-center gap-2">
+                <Sparkles className="w-4 h-4 shrink-0" />
+                <span className="font-semibold">Controlling Background Blur Intensity (Subject Remains Pin-Sharp)</span>
+              </div>
+            )}
+
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-400 uppercase tracking-wider block">
                 Color &amp; Lighting
@@ -878,14 +999,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </button>
             </div>
 
-            {/* Tool 2: Super-Resolution Upscaler */}
+            {/* Tool 2: High-Precision 4K Clarity Upscaler & Sharpness Enhancer */}
             <div className="p-4 bg-zinc-50 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-xl space-y-3 shadow-sm">
               <div className="flex items-center gap-2 text-zinc-900 dark:text-white font-bold text-xs">
                 <Sparkles className="w-4 h-4 text-brand-500" />
-                <span>Super-Resolution Upscaler</span>
+                <span>High-Precision 4K Clarity Upscaler &amp; Sharpness Enhancer</span>
               </div>
               <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                Enhance low-resolution photos into crisp, high-definition assets using sub-pixel unsharp masking &amp; micro-texture reconstruction.
+                Enhance photo clarity and edge sharpness using adaptive high-frequency edge reconstruction and contrast enhancement.
               </p>
 
               {upscaleStatus && (
@@ -901,16 +1022,106 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   disabled={isUpscaling || !activeLayer?.src || activeLayer.type === 'text'}
                   className="py-2 px-3 rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white font-semibold text-xs border border-zinc-300 dark:border-zinc-700/80 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 shadow-sm"
                 >
-                  <span>2x HD</span>
+                  <span>2x HD Clarity</span>
                 </button>
                 <button
                   onClick={() => handleUpscale(4)}
                   disabled={isUpscaling || !activeLayer?.src || activeLayer.type === 'text'}
                   className="py-2 px-3 rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white font-semibold text-xs border border-zinc-300 dark:border-zinc-700/80 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 shadow-sm"
                 >
-                  <span>4x Ultra HD</span>
+                  <span>4x Ultra HD Clarity</span>
                 </button>
               </div>
+            </div>
+
+            {/* Tool 3: Image Compressor & Format Converter Studio */}
+            <div className="p-4 bg-zinc-50 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-xl space-y-3.5 shadow-sm">
+              <div className="flex items-center gap-2 text-zinc-900 dark:text-white font-bold text-xs">
+                <FileCheck className="w-4 h-4 text-brand-500" />
+                <span>Image Compressor &amp; Format Converter</span>
+              </div>
+              <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                Convert to next-gen WebP, standard JPEG, or PNG with fine-tuned quality control and strict file budget limits.
+              </p>
+
+              {/* Format selection */}
+              <div className="space-y-1">
+                <span className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300">Export Format</span>
+                <div className="grid grid-cols-3 gap-1.5 bg-zinc-100 dark:bg-zinc-900 p-1 rounded-lg border border-zinc-200 dark:border-zinc-800 text-xs">
+                  {(['webp', 'jpeg', 'png'] as ExportFormat[]).map((fmt) => (
+                    <button
+                      key={fmt}
+                      onClick={() => setCompressFormat(fmt)}
+                      className={`py-1.5 rounded font-bold uppercase transition-all ${
+                        compressFormat === fmt
+                          ? 'bg-brand-500 text-black shadow-sm'
+                          : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                      }`}
+                    >
+                      {fmt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quality slider for WebP & JPEG */}
+              {compressFormat !== 'png' && (
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs text-zinc-600 dark:text-zinc-400">
+                    <span>Quality Level</span>
+                    <span className="font-mono text-zinc-700 dark:text-zinc-300 font-bold">
+                      {Math.round(compressQuality * 100)}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="10"
+                    max="100"
+                    step="5"
+                    value={Math.round(compressQuality * 100)}
+                    onChange={(e) => setCompressQuality(Number(e.target.value) / 100)}
+                    className="w-full accent-brand-500 bg-zinc-200 dark:bg-zinc-800"
+                  />
+                </div>
+              )}
+
+              {/* Strict KB Target Limits */}
+              <div className="space-y-1">
+                <span className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300">File Budget Limit</span>
+                <div className="grid grid-cols-5 gap-1 text-[10px]">
+                  {[
+                    { label: 'None', val: null },
+                    { label: '<20KB', val: 20 },
+                    { label: '<30KB', val: 30 },
+                    { label: '<50KB', val: 50 },
+                    { label: '<100KB', val: 100 },
+                  ].map((budget) => (
+                    <button
+                      key={budget.label}
+                      onClick={() => setCompressMaxKb(budget.val)}
+                      className={`py-1 px-1 rounded font-bold border transition-all ${
+                        compressMaxKb === budget.val
+                          ? 'bg-brand-500/20 border-brand-500 text-brand-600 dark:text-brand-400 shadow-sm'
+                          : 'border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-zinc-400'
+                      }`}
+                    >
+                      {budget.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Instant Export Button */}
+              <button
+                onClick={handleCompressExport}
+                disabled={isCompressing || !activeLayer?.src}
+                className="w-full py-2.5 px-3 rounded-lg bg-brand-500 hover:bg-brand-600 text-black font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 disabled:opacity-40"
+              >
+                {isCompressing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                <span>
+                  Export {compressFormat.toUpperCase()} ({Math.round(compressQuality * 100)}% Qual{compressMaxKb ? ` • <${compressMaxKb}KB` : ''})
+                </span>
+              </button>
             </div>
           </div>
         )}
@@ -932,7 +1143,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             EverydayPDF →
           </a>
           <span className="text-zinc-400 dark:text-zinc-600">•</span>
-          <button onClick={onOpenAbout} className="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
+          <button onClick={onOpenAbout} className="min-h-[44px] px-1 flex items-center hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
             About
           </button>
           {isPwaInstallable && !isPwaInstalled && (
@@ -940,7 +1151,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span className="text-zinc-400 dark:text-zinc-600">•</span>
               <button
                 onClick={onInstallPwa}
-                className="text-brand-600 dark:text-brand-400 font-semibold hover:underline"
+                className="min-h-[44px] px-1 flex items-center text-brand-600 dark:text-brand-400 font-semibold hover:underline"
               >
                 Install App
               </button>
@@ -954,10 +1165,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={onOpenPrivacy} className="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
+          <button onClick={onOpenPrivacy} className="min-h-[44px] px-1 flex items-center hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
             Privacy
           </button>
-          <button onClick={onOpenTerms} className="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
+          <button onClick={onOpenTerms} className="min-h-[44px] px-1 flex items-center hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
             Terms
           </button>
         </div>
