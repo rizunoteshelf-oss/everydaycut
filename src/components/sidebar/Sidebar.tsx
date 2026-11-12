@@ -183,14 +183,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       )}
 
       <aside
-        className={`bg-panel border-borderDark flex flex-col shrink-0 overflow-y-auto transition-colors duration-200 z-20 ${
+        className={`bg-panel border-borderDark flex flex-col shrink-0 overflow-hidden transition-colors duration-200 z-20 ${
           isOpenOnMobile
-            ? 'fixed inset-x-0 bottom-0 z-50 max-h-[85vh] w-full border-t rounded-t-2xl shadow-2xl !flex'
-            : 'hidden md:flex md:w-80 md:h-full md:border-l md:relative'
+            ? 'fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] w-full border-t rounded-t-2xl shadow-2xl !flex'
+            : 'hidden md:flex md:w-80 md:h-full md:max-h-full md:min-h-0 md:border-l md:relative'
         }`}
       >
         {/* Mobile-Only Drag Handle and Header */}
-        <div className="md:hidden flex items-center justify-between px-4 pt-3 pb-2 border-b border-borderDark sticky top-0 bg-panel z-30">
+        <div className="md:hidden flex items-center justify-between px-4 pt-3 pb-2 border-b border-borderDark shrink-0 bg-panel z-30 relative">
           <div className="w-10 h-1 bg-zinc-300 dark:bg-zinc-700 rounded-full mx-auto absolute left-1/2 -translate-x-1/2 top-1.5" />
           <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">Studio Controls</span>
           <button
@@ -201,132 +201,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <X className="w-4 h-4" />
           </button>
         </div>
-      {/* Active Preset Guideline Banner */}
-      {activePreset && (
-        <div className="p-3 bg-brand-500/10 border-b border-brand-500/20 text-xs shrink-0 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="font-bold text-brand-600 dark:text-brand-400">
-              {activePreset === 'pan_photo' && '🇮🇳 PAN Photo (213×213 px)'}
-              {activePreset === 'pan_signature' && '🇮🇳 PAN Signature (400×200 px)'}
-              {activePreset === 'passport' && '🛂 Passport Biometric (600×600 px)'}
-              {activePreset === 'amazon' && '🛒 Amazon 85% Safe Zone'}
-              {activePreset === 'pfp_maker' && '👤 Profile Picture Circle'}
-              {activePreset === 'crop' && '📐 Rule-of-Thirds Grid'}
-              {activePreset === 'converter' && '⚡ Compress & Convert Studio'}
-              {activePreset === 'blur_bokeh' && '✨ Portrait Depth & Bokeh'}
-              {activePreset === 'instagram_story' && '📱 Instagram Story (9:16)'}
-              {activePreset === 'youtube_thumb' && '🖼️ YouTube Thumbnail (16:9)'}
-            </span>
-            {guideOverlay !== 'none' ? (
-              <button
-                onClick={() => setGuideOverlay('none')}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-600 dark:text-brand-400 font-semibold hover:bg-brand-500/30 transition-colors"
-                title="Click to hide guidelines"
-              >
-                Hide Guides
-              </button>
-            ) : (
-              <button
-                onClick={() => {
-                  if (activePreset === 'pan_photo') setGuideOverlay('pan_face');
-                  else if (activePreset === 'pan_signature') setGuideOverlay('pan_signature');
-                  else if (activePreset === 'passport') setGuideOverlay('passport_biometric');
-                  else if (activePreset === 'amazon') setGuideOverlay('amazon_margin');
-                  else if (activePreset === 'pfp_maker') setGuideOverlay('circle_pfp');
-                  else if (activePreset === 'crop') setGuideOverlay('rule_of_thirds');
-                }}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-semibold hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
-                title="Click to show guidelines"
-              >
-                Show Guides
-              </button>
-            )}
-          </div>
-          <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-tight">
-            {activePreset === 'pan_photo' && 'Align face inside the biometric oval. Export will auto-compress strictly under 30 KB JPEG for UTIITSL/NSDL.'}
-            {activePreset === 'pan_signature' && 'Align signature within the margins. Export will auto-compress strictly under 20 KB JPEG.'}
-            {activePreset === 'passport' && 'Biometric eye and chin guidelines active. Pure white background.'}
-            {activePreset === 'amazon' && 'Product must occupy 85% of image frame on pure #FFFFFF white background.'}
-            {activePreset === 'pfp_maker' && 'Center subject within the circular preview.'}
-            {activePreset === 'crop' && 'Align visual focal points along the rule-of-thirds grid lines for cinematic balance.'}
-            {activePreset === 'converter' && 'Convert formats (WebP, JPEG, PNG) and fine-tune quality with strict KB budgets.'}
-            {activePreset === 'blur_bokeh' && 'Dual-layer depth active: foreground subject remains pin-sharp while background blur is adjustable.'}
-            {activePreset === 'instagram_story' && 'Full 9:16 vertical composition with smart blurred background backdrop.'}
-            {activePreset === 'youtube_thumb' && 'High CTR 16:9 canvas with punchy contrast and vibrant cutout pop.'}
-          </p>
-
-          {/* Document Verification & Compliance Section */}
-          {(activePreset === 'pan_photo' || activePreset === 'passport') && (
-            <div className="pt-2 border-t border-brand-500/20 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300">
-                  Auto White Background Cutout
-                </span>
-                <button
-                  onClick={() => setAutoCutoutDocument(!autoCutoutDocument)}
-                  className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
-                    autoCutoutDocument
-                      ? 'bg-emerald-500 text-white'
-                      : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'
-                  }`}
-                >
-                  {autoCutoutDocument ? 'ON' : 'OFF'}
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-1 text-[10px]">
-                <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                  <CheckCircle2 className="w-3 h-3 shrink-0" />
-                  <span>{activePreset === 'pan_photo' ? '213×213 px OK' : '600×600 px OK'}</span>
-                </div>
-                <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                  <CheckCircle2 className="w-3 h-3 shrink-0" />
-                  <span>300 DPI Embedded</span>
-                </div>
-                <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                  <CheckCircle2 className="w-3 h-3 shrink-0" />
-                  <span>{activePreset === 'pan_photo' ? '<30 KB Target' : '<100 KB Target'}</span>
-                </div>
-                <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                  <CheckCircle2 className="w-3 h-3 shrink-0" />
-                  <span>#FFFFFF Pure White</span>
-                </div>
-              </div>
-
-              <p className="text-[9px] text-zinc-500 dark:text-zinc-400 italic leading-snug">
-                Independent client-side utility. EverydayCut is not affiliated with, endorsed by, or connected to NSDL (Protean), UTIITSL, Passport Seva, or the Income Tax Department of India.
-              </p>
-            </div>
-          )}
-
-          {activePreset === 'pan_signature' && (
-            <div className="pt-2 border-t border-brand-500/20 space-y-2">
-              <div className="grid grid-cols-2 gap-1 text-[10px]">
-                <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                  <CheckCircle2 className="w-3 h-3 shrink-0" />
-                  <span>400×200 px OK</span>
-                </div>
-                <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                  <CheckCircle2 className="w-3 h-3 shrink-0" />
-                  <span>300 DPI Embedded</span>
-                </div>
-                <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                  <CheckCircle2 className="w-3 h-3 shrink-0" />
-                  <span>&lt;20 KB Target</span>
-                </div>
-                <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                  <CheckCircle2 className="w-3 h-3 shrink-0" />
-                  <span>Ink High-Pass</span>
-                </div>
-              </div>
-
-              <p className="text-[9px] text-zinc-500 dark:text-zinc-400 italic leading-snug">
-                Independent client-side utility. EverydayCut is not affiliated with, endorsed by, or connected to NSDL (Protean), UTIITSL, or the Income Tax Department of India.
-              </p>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Top Tab Switcher */}
       <div className="grid grid-cols-5 border-b border-borderDark p-1 gap-1 bg-zinc-100 dark:bg-zinc-900/70 shrink-0">
@@ -396,8 +270,134 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
       </div>
 
-      {/* Main Tab Body */}
-      <div className="p-4 flex-1 space-y-6">
+      {/* Main Tab Body (Internally Scrollable) */}
+      <div data-testid="sidebar-scroll-body" className="p-4 flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-6">
+        {/* Active Preset Guideline Banner */}
+        {activePreset && (
+          <div className="-mx-4 -mt-4 p-3 bg-brand-500/10 border-b border-brand-500/20 text-xs space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-brand-600 dark:text-brand-400">
+                {activePreset === 'pan_photo' && '🇮🇳 PAN Photo (213×213 px)'}
+                {activePreset === 'pan_signature' && '🇮🇳 PAN Signature (400×200 px)'}
+                {activePreset === 'passport' && '🛂 Passport Biometric (600×600 px)'}
+                {activePreset === 'amazon' && '🛒 Amazon 85% Safe Zone'}
+                {activePreset === 'pfp_maker' && '👤 Profile Picture Circle'}
+                {activePreset === 'crop' && '📐 Rule-of-Thirds Grid'}
+                {activePreset === 'converter' && '⚡ Compress & Convert Studio'}
+                {activePreset === 'blur_bokeh' && '✨ Portrait Depth & Bokeh'}
+                {activePreset === 'instagram_story' && '📱 Instagram Story (9:16)'}
+                {activePreset === 'youtube_thumb' && '🖼️ YouTube Thumbnail (16:9)'}
+              </span>
+              {guideOverlay !== 'none' ? (
+                <button
+                  onClick={() => setGuideOverlay('none')}
+                  className="text-[10px] px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-600 dark:text-brand-400 font-semibold hover:bg-brand-500/30 transition-colors"
+                  title="Click to hide guidelines"
+                >
+                  Hide Guides
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    if (activePreset === 'pan_photo') setGuideOverlay('pan_face');
+                    else if (activePreset === 'pan_signature') setGuideOverlay('pan_signature');
+                    else if (activePreset === 'passport') setGuideOverlay('passport_biometric');
+                    else if (activePreset === 'amazon') setGuideOverlay('amazon_margin');
+                    else if (activePreset === 'pfp_maker') setGuideOverlay('circle_pfp');
+                    else if (activePreset === 'crop') setGuideOverlay('rule_of_thirds');
+                  }}
+                  className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-semibold hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
+                  title="Click to show guidelines"
+                >
+                  Show Guides
+                </button>
+              )}
+            </div>
+            <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-tight">
+              {activePreset === 'pan_photo' && 'Align face inside the biometric oval. Export will auto-compress strictly under 30 KB JPEG for UTIITSL/NSDL.'}
+              {activePreset === 'pan_signature' && 'Align signature within the margins. Export will auto-compress strictly under 20 KB JPEG.'}
+              {activePreset === 'passport' && 'Biometric eye and chin guidelines active. Pure white background.'}
+              {activePreset === 'amazon' && 'Product must occupy 85% of image frame on pure #FFFFFF white background.'}
+              {activePreset === 'pfp_maker' && 'Center subject within the circular preview.'}
+              {activePreset === 'crop' && 'Align visual focal points along the rule-of-thirds grid lines for cinematic balance.'}
+              {activePreset === 'converter' && 'Convert formats (WebP, JPEG, PNG) and fine-tune quality with strict KB budgets.'}
+              {activePreset === 'blur_bokeh' && 'Dual-layer depth active: foreground subject remains pin-sharp while background blur is adjustable.'}
+              {activePreset === 'instagram_story' && 'Full 9:16 vertical composition with smart blurred background backdrop.'}
+              {activePreset === 'youtube_thumb' && 'High CTR 16:9 canvas with punchy contrast and vibrant cutout pop.'}
+            </p>
+
+            {/* Document Verification & Compliance Section */}
+            {(activePreset === 'pan_photo' || activePreset === 'passport') && (
+              <div className="pt-2 border-t border-brand-500/20 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300">
+                    Auto White Background Cutout
+                  </span>
+                  <button
+                    onClick={() => setAutoCutoutDocument(!autoCutoutDocument)}
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
+                      autoCutoutDocument
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'
+                    }`}
+                  >
+                    {autoCutoutDocument ? 'ON' : 'OFF'}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-1 text-[10px]">
+                  <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                    <CheckCircle2 className="w-3 h-3 shrink-0" />
+                    <span>{activePreset === 'pan_photo' ? '213×213 px OK' : '600×600 px OK'}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                    <CheckCircle2 className="w-3 h-3 shrink-0" />
+                    <span>300 DPI Embedded</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                    <CheckCircle2 className="w-3 h-3 shrink-0" />
+                    <span>{activePreset === 'pan_photo' ? '<30 KB Target' : '<100 KB Target'}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                    <CheckCircle2 className="w-3 h-3 shrink-0" />
+                    <span>#FFFFFF Pure White</span>
+                  </div>
+                </div>
+
+                <p className="text-[9px] text-zinc-500 dark:text-zinc-400 italic leading-snug">
+                  Independent client-side utility. EverydayCut is not affiliated with, endorsed by, or connected to NSDL (Protean), UTIITSL, Passport Seva, or the Income Tax Department of India.
+                </p>
+              </div>
+            )}
+
+            {activePreset === 'pan_signature' && (
+              <div className="pt-2 border-t border-brand-500/20 space-y-2">
+                <div className="grid grid-cols-2 gap-1 text-[10px]">
+                  <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                    <CheckCircle2 className="w-3 h-3 shrink-0" />
+                    <span>400×200 px OK</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                    <CheckCircle2 className="w-3 h-3 shrink-0" />
+                    <span>300 DPI Embedded</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                    <CheckCircle2 className="w-3 h-3 shrink-0" />
+                    <span>&lt;20 KB Target</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                    <CheckCircle2 className="w-3 h-3 shrink-0" />
+                    <span>Ink High-Pass</span>
+                  </div>
+                </div>
+
+                <p className="text-[9px] text-zinc-500 dark:text-zinc-400 italic leading-snug">
+                  Independent client-side utility. EverydayCut is not affiliated with, endorsed by, or connected to NSDL (Protean), UTIITSL, or the Income Tax Department of India.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
         {/* === TAB 1: BACKGROUND === */}
         {activeTab === 'background' && (
           <div className="space-y-5">

@@ -825,7 +825,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({
       : STUDIO_TOOLS.filter((t) => t.category === activeCategory);
 
   return (
-    <div className="flex-1 w-full h-full flex flex-col items-center justify-start py-8 px-4 sm:px-6 bg-stage overflow-y-auto">
+    <div className="flex-1 w-full min-w-0 flex flex-col items-center justify-start py-8 px-4 sm:px-6 bg-stage">
       {/* Hidden Global Native File Input (Isolated from parent click bubbling and accessible across all browsers) */}
       <input
         ref={fileInputRef}
@@ -1012,7 +1012,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({
       </div>
 
       {/* Studio Hub Catalog */}
-      <div id="studio-catalog" className="mt-14 max-w-5xl w-full scroll-mt-6">
+      <div id="studio-catalog" className="mt-14 max-w-5xl w-full scroll-mt-20">
         <div className="text-center mb-6">
           <span className="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-widest block mb-1">
             Complete Studio Catalog

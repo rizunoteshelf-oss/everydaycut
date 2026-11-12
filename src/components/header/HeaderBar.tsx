@@ -160,16 +160,16 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   };
 
   return (
-    <header className="h-14 bg-panel border-b border-borderDark px-4 flex items-center justify-between z-30 shrink-0">
+    <header className="sticky top-0 w-full min-w-0 h-14 bg-panel border-b border-borderDark px-2.5 sm:px-4 flex items-center justify-between gap-2 z-30 shrink-0">
       {/* Left: Brand Identity & Batch Mode Trigger */}
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         <div className="w-8 h-8 rounded-lg bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-500 shrink-0">
           <Scissors className="w-4 h-4 text-brand-500" />
         </div>
-        <div className="flex flex-col shrink-0">
+        <div className={`flex-col shrink-0 ${layers.length > 0 ? 'hidden sm:flex' : 'flex'}`}>
           <span className="font-bold text-sm tracking-tight text-zinc-900 dark:text-white flex items-center gap-1.5 whitespace-nowrap">
             EverydayCut
-            <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-600 dark:text-brand-400 border border-brand-500/30 whitespace-nowrap">
+            <span className="hidden sm:inline-block text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-600 dark:text-brand-400 border border-brand-500/30 whitespace-nowrap">
               Free &amp; Client-Side
             </span>
           </span>
@@ -267,15 +267,16 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
           )}
         </div>
       ) : (
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2.5">
           {/* Aspect Ratio Dropdown */}
           <div className="relative">
             <button
               onClick={() => setShowAspectMenu(!showAspectMenu)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-xs font-medium text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700/60 transition-colors"
+              aria-label="Aspect Ratio"
+              className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 min-h-[40px] sm:min-h-0 rounded-lg bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-xs font-medium text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700/60 transition-colors"
             >
               <Ratio className="w-3.5 h-3.5 text-brand-500" />
-              <span>{ASPECT_RATIOS.find((r) => r.id === aspectRatio)?.label}</span>
+              <span className="hidden sm:inline">{ASPECT_RATIOS.find((r) => r.id === aspectRatio)?.label}</span>
               <ChevronDown className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
             </button>
 
@@ -345,10 +346,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
             </button>
           </div>
 
-          <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
+          <div className="hidden md:block h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
 
           {/* Zoom Controls */}
-          <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 rounded-lg p-0.5">
+          <div className="hidden md:flex items-center gap-1 bg-zinc-100 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 rounded-lg p-0.5">
             <button
               onClick={zoomOut}
               title="Zoom Out (-)"
@@ -425,10 +426,11 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
         {layers.length > 0 && (
           <button
             onClick={onNewImage}
-            className="px-3 py-2 min-h-[44px] text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/60 rounded-lg flex items-center gap-1.5 transition-colors"
+            aria-label="New Image"
+            className="px-2.5 sm:px-3 py-2 min-h-[44px] text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/60 rounded-lg flex items-center gap-1.5 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>New</span>
+            <span className="hidden sm:inline">New</span>
           </button>
         )}
 
@@ -437,7 +439,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
             <button
               onClick={() => setShowExportMenu(!showExportMenu)}
               disabled={isExporting}
-              className="px-4 py-2 min-h-[44px] rounded-lg bg-brand-500 hover:bg-brand-600 text-black font-semibold text-xs transition-all shadow-md flex items-center gap-1.5 disabled:opacity-50"
+              className="px-3 sm:px-4 py-2 min-h-[44px] rounded-lg bg-brand-500 hover:bg-brand-600 text-black font-semibold text-xs transition-all shadow-md flex items-center gap-1.5 disabled:opacity-50"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export</span>

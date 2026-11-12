@@ -40,6 +40,24 @@ export const App: React.FC = () => {
   const [batchOpen, setBatchOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
+  const isEditorActive = layers.length > 0;
+
+  // Reset scroll position and lock document scroll strictly in Editor View
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    if (isEditorActive) {
+      document.documentElement.classList.add('overflow-hidden');
+      document.body.classList.add('overflow-hidden');
+    } else {
+      document.documentElement.classList.remove('overflow-hidden');
+      document.body.classList.remove('overflow-hidden');
+    }
+    return () => {
+      document.documentElement.classList.remove('overflow-hidden');
+      document.body.classList.remove('overflow-hidden');
+    };
+  }, [isEditorActive]);
+
   // Progressive Web App (PWA) Install Management
   const {
     isInstallable,
@@ -105,7 +123,13 @@ export const App: React.FC = () => {
   }, [activePreset]);
 
   return (
-    <div className="flex flex-col w-screen h-screen bg-stage text-zinc-900 dark:text-zinc-100 overflow-hidden font-sans transition-colors duration-200">
+    <div
+      className={
+        isEditorActive
+          ? 'fixed inset-0 flex flex-col w-full bg-stage text-zinc-900 dark:text-zinc-100 overflow-hidden font-sans transition-colors duration-200'
+          : 'flex flex-col w-full min-h-dvh bg-stage text-zinc-900 dark:text-zinc-100 font-sans transition-colors duration-200'
+      }
+    >
       {/* Dynamic SEO Meta, OpenGraph, Canonical & Schema.org JSON-LD */}
       <SEOHead activeToolPreset={activePreset} />
 
@@ -121,8 +145,14 @@ export const App: React.FC = () => {
       />
 
       {/* Main Studio Viewport & Sidebar */}
-      <div className="flex-1 min-h-0 flex w-full overflow-hidden relative">
-        {layers.length === 0 ? (
+      <div
+        className={
+          isEditorActive
+            ? 'flex-1 min-h-0 flex w-full overflow-hidden relative'
+            : 'flex-1 flex flex-col w-full relative'
+        }
+      >
+        {!isEditorActive ? (
           <Dropzone
             onOpenPrivacy={() => setPrivacyOpen(true)}
             onOpenTerms={() => setTermsOpen(true)}

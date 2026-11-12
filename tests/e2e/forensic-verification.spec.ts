@@ -281,4 +281,145 @@ test.describe('TITAN FORENSIC VERIFICATION SUITE', () => {
       }
     }
   });
+
+  test('10. Scrolling & AdSense Height-Mutation Resilience (Desktop 1280x800 & Mobile 390x844)', async ({ page, context }) => {
+    await context.route('**/*huggingface.co/**', (route) => route.abort());
+    await context.route('**/*hf.co/**', (route) => route.abort());
+
+    // 10A: Desktop Landing View native window scroll + zero horizontal overflow
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    const consentBtn = page.getByRole('button', { name: 'Accept All' });
+    if (await consentBtn.isVisible()) await consentBtn.click();
+
+    const landingMetrics = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      innerWidth: window.innerWidth,
+      scrollHeight: document.documentElement.scrollHeight,
+    }));
+    expect(landingMetrics.scrollWidth).toBeLessThanOrEqual(landingMetrics.innerWidth);
+    expect(landingMetrics.scrollHeight).toBeGreaterThan(1500);
+
+    // Mouse wheel & PageDown scroll window cleanly
+    await page.mouse.move(640, 400);
+    await page.mouse.wheel(0, 900);
+    await page.waitForTimeout(100);
+    const scrolledY = await page.evaluate(() => window.scrollY);
+    expect(scrolledY).toBeGreaterThan(400);
+
+    // Sticky header remains at top (y === 0)
+    const headerBoxLanding = await page.locator('header').boundingBox();
+    expect(headerBoxLanding).toBeTruthy();
+    expect(headerBoxLanding!.y).toBe(0);
+
+    // 10B: Load image while scrolled down -> Editor View must reset scrollY to 0
+    await page.locator('input[type="file"]').setInputFiles('public/samples/portrait.jpg');
+    await expect(page.getByRole('button', { name: /Export/i }).first()).toBeVisible({ timeout: 10000 });
+    await page.waitForTimeout(100);
+
+    const editorScrollYAfterLoad = await page.evaluate(() => window.scrollY);
+    expect(editorScrollYAfterLoad).toBe(0);
+
+    // 10C: Simulate Google AdSense runtime `style="height: auto !important;"` injection on ancestors
+    await page.evaluate(() => {
+      const selectors = [
+        '#root',
+        '#root > div',
+        '#root > div > div',
+        '#root > div > div > aside',
+        '[data-testid="sidebar-scroll-body"]',
+      ];
+      for (const sel of selectors) {
+        document.querySelectorAll(sel).forEach((el) => {
+          (el as HTMLElement).style.setProperty('height', 'auto', 'important');
+        });
+      }
+    });
+
+    // Verify Editor shell remains locked to 800px viewport height
+    const headerBoxEditor = await page.locator('header').boundingBox();
+    expect(headerBoxEditor).toBeTruthy();
+    expect(headerBoxEditor!.y).toBe(0);
+
+    const leaderboardAd = page.locator('aside[aria-label="Advertisement"]').last();
+    const adBox = await leaderboardAd.boundingBox();
+    expect(adBox).toBeTruthy();
+    expect(adBox!.y + adBox!.height).toBeLessThanOrEqual(801);
+
+    // 10D: Switch to tall tab ("AI Tools") and verify wheeling over Sidebar scrolls only sidebar-scroll-body, NOT window
+    await page.getByRole('button', { name: 'AI Tools' }).click();
+    const sidebarBody = page.getByTestId('sidebar-scroll-body');
+    const sidebarBox = await sidebarBody.boundingBox();
+    expect(sidebarBox).toBeTruthy();
+    await page.mouse.move(sidebarBox!.x + sidebarBox!.width / 2, sidebarBox!.y + 100);
+    await page.mouse.wheel(0, 300);
+    await page.waitForTimeout(100);
+
+    const sidebarResult = await page.evaluate(() => {
+      const sb = document.querySelector('[data-testid="sidebar-scroll-body"]') as HTMLElement;
+      return {
+        sidebarScrollTop: sb ? sb.scrollTop : -1,
+        sidebarCanScroll: sb ? sb.scrollHeight > sb.clientHeight : false,
+        windowScrollY: window.scrollY,
+        headerTop: document.querySelector('header')?.getBoundingClientRect().top ?? -1,
+      };
+    });
+    expect(sidebarResult.sidebarCanScroll).toBe(true);
+    expect(sidebarResult.sidebarScrollTop).toBeGreaterThan(0);
+    expect(sidebarResult.windowScrollY).toBe(0);
+    expect(sidebarResult.headerTop).toBe(0);
+
+    // 10E: Wheeling over Canvas does NOT scroll window or move header
+    await page.mouse.move(250, 400);
+    await page.mouse.wheel(0, 300);
+    await page.waitForTimeout(100);
+    const canvasWheelResult = await page.evaluate(() => ({
+      windowScrollY: window.scrollY,
+      headerTop: document.querySelector('header')?.getBoundingClientRect().top ?? -1,
+    }));
+    expect(canvasWheelResult.windowScrollY).toBe(0);
+    expect(canvasWheelResult.headerTop).toBe(0);
+
+    // 10F: Mobile (390x844) Landing & Editor zero horizontal overflow + bottom drawer scroll
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(100);
+    const mobileEditorMetrics = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      innerWidth: window.innerWidth,
+      windowScrollY: window.scrollY,
+      headerTop: document.querySelector('header')?.getBoundingClientRect().top ?? -1,
+    }));
+    expect(mobileEditorMetrics.scrollWidth).toBeLessThanOrEqual(mobileEditorMetrics.innerWidth);
+    expect(mobileEditorMetrics.windowScrollY).toBe(0);
+    expect(mobileEditorMetrics.headerTop).toBe(0);
+
+    // Open mobile Studio Controls drawer and verify internal scroll
+    await page.getByRole('button', { name: 'Open Studio Controls' }).click();
+    await expect(page.getByRole('button', { name: 'Close Studio Controls' })).toBeVisible();
+    const mobileScrollable = await page.evaluate(() => {
+      const sb = document.querySelector('[data-testid="sidebar-scroll-body"]') as HTMLElement;
+      if (!sb) return { canScroll: false, scrollTop: -1 };
+      sb.scrollTop = 150;
+      return { canScroll: sb.scrollHeight > sb.clientHeight, scrollTop: sb.scrollTop };
+    });
+    expect(mobileScrollable.canScroll).toBe(true);
+    expect(mobileScrollable.scrollTop).toBeGreaterThan(0);
+
+    // 10G: Return to Landing View via New Image and verify Mobile Landing View scroll + zero horizontal overflow
+    await page.getByRole('button', { name: 'Close Studio Controls' }).click();
+    await page.getByRole('button', { name: 'New Image' }).click();
+    await page.waitForTimeout(100);
+    const mobileLandingMetrics = await page.evaluate(() => {
+      window.scrollTo(0, 500);
+      return {
+        scrollWidth: document.documentElement.scrollWidth,
+        innerWidth: window.innerWidth,
+        scrollHeight: document.documentElement.scrollHeight,
+        windowScrollY: window.scrollY,
+      };
+    });
+    expect(mobileLandingMetrics.scrollWidth).toBeLessThanOrEqual(mobileLandingMetrics.innerWidth);
+    expect(mobileLandingMetrics.scrollHeight).toBeGreaterThan(2000);
+    expect(mobileLandingMetrics.windowScrollY).toBeGreaterThan(300);
+  });
 });
