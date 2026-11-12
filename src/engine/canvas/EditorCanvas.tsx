@@ -98,7 +98,7 @@ export const EditorCanvas: React.FC<EditorCanvasProps> = ({ stageRef }) => {
       default:
         return { width: baseW, height: baseH };
     }
-  }, [aspectRatio, layers]);
+  }, [aspectRatio, customDimensions, layers]);
 
   // Sync canvas dimensions to store
   useEffect(() => {

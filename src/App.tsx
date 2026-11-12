@@ -1,11 +1,13 @@
-import React, { useRef, useState, useEffect, Suspense } from 'react';
+import React, { useRef, useState, useEffect, useCallback, Suspense } from 'react';
 import Konva from 'konva';
 import { Sliders } from 'lucide-react';
 import { useEditorStore } from './engine/state/editorStore.ts';
+import { ToolPresetId } from './engine/state/types.ts';
 import { HeaderBar } from './components/header/HeaderBar.tsx';
 import { Sidebar } from './components/sidebar/Sidebar.tsx';
 import { EditorCanvas } from './engine/canvas/EditorCanvas.tsx';
 import { Dropzone } from './components/ui/Dropzone.tsx';
+import { HomeHub } from './components/home/HomeHub.tsx';
 import { LoadingOverlay } from './components/ui/LoadingOverlay.tsx';
 import { AdBannerSlot } from './components/ads/AdBannerSlot.tsx';
 import { SEOHead } from './seo/SEOHead.tsx';
@@ -41,6 +43,38 @@ export const App: React.FC = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const isEditorActive = layers.length > 0;
+  const isToolRoute = activePreset !== null;
+
+  // Navigation helpers keeping URL, store, and scroll position synchronized
+  const navigateToTool = useCallback(
+    (presetId: ToolPresetId) => {
+      if (layers.length > 0) {
+        reset();
+      }
+      setActivePreset(presetId);
+      applyToolPreset(presetId);
+      const seo = getSEOEntryByPreset(presetId);
+      if (seo.slug) {
+        const targetPath = `/${seo.slug}`;
+        if (window.location.pathname.replace(/\/+$/, '') !== targetPath) {
+          window.history.pushState(null, '', targetPath);
+        }
+      }
+      window.scrollTo(0, 0);
+    },
+    [layers.length, reset, setActivePreset, applyToolPreset]
+  );
+
+  const navigateHome = useCallback(() => {
+    if (layers.length > 0) {
+      reset();
+    }
+    setActivePreset(null);
+    if (window.location.pathname !== '/') {
+      window.history.pushState(null, '', '/');
+    }
+    window.scrollTo(0, 0);
+  }, [layers.length, reset, setActivePreset]);
 
   // Reset scroll position and lock document scroll strictly in Editor View
   useEffect(() => {
@@ -71,10 +105,11 @@ export const App: React.FC = () => {
   // Sync incoming route (History API clean path or legacy hash) on mount and popstate
   useEffect(() => {
     const syncFromRoute = () => {
-      // 1. Check clean path first (e.g. /background-remover)
-      const path = window.location.pathname;
-      if (path && path !== '/') {
-        const preset = getPresetBySlug(path);
+      const normalizedPath = window.location.pathname.replace(/\/+$/, '') || '/';
+
+      // 1. Check clean path first (e.g. /background-remover or /background-remover/)
+      if (normalizedPath !== '/') {
+        const preset = getPresetBySlug(normalizedPath);
         if (preset) {
           setActivePreset(preset);
           applyToolPreset(preset);
@@ -89,11 +124,14 @@ export const App: React.FC = () => {
         if (preset) {
           setActivePreset(preset);
           applyToolPreset(preset);
-          // Clean up URL in address bar to clean path
-          const cleanSlug = hash.replace(/^#?\/?/, '').trim();
+          const cleanSlug = hash.replace(/^#?\/?|\/+$/g, '').trim();
           window.history.replaceState(null, '', `/${cleanSlug}`);
+          return;
         }
       }
+
+      // 3. Explicit root / -> clear activePreset so EverydayCut Homepage renders cleanly
+      setActivePreset(null);
     };
 
     syncFromRoute();
@@ -104,23 +142,6 @@ export const App: React.FC = () => {
       window.removeEventListener('hashchange', syncFromRoute);
     };
   }, [setActivePreset, applyToolPreset]);
-
-  // Sync URL clean path when active preset changes in editor
-  useEffect(() => {
-    if (activePreset) {
-      const seo = getSEOEntryByPreset(activePreset);
-      if (seo) {
-        const targetPath = `/${seo.slug}`;
-        if (window.location.pathname !== targetPath) {
-          window.history.pushState(null, '', targetPath);
-        }
-      }
-    } else {
-      if (window.location.pathname !== '/') {
-        window.history.pushState(null, '', '/');
-      }
-    }
-  }, [activePreset]);
 
   return (
     <div
@@ -137,6 +158,8 @@ export const App: React.FC = () => {
       <HeaderBar
         stageRef={stageRef}
         onNewImage={reset}
+        onNavigateHome={navigateHome}
+        onSelectTool={navigateToTool}
         onOpenBatch={() => setBatchOpen(true)}
         onExportSuccess={triggerExportCelebration}
         onInstallPwa={promptInstall}
@@ -144,7 +167,7 @@ export const App: React.FC = () => {
         isPwaInstalled={isInstalled}
       />
 
-      {/* Main Studio Viewport & Sidebar */}
+      {/* Main Content Area: Home Hub (/) vs Tool Workspace (/<slug>) vs Locked Canvas Editor */}
       <div
         className={
           isEditorActive
@@ -153,12 +176,24 @@ export const App: React.FC = () => {
         }
       >
         {!isEditorActive ? (
-          <Dropzone
-            onOpenPrivacy={() => setPrivacyOpen(true)}
-            onOpenTerms={() => setTermsOpen(true)}
-            onOpenAbout={() => setAboutOpen(true)}
-            onOpenBatch={() => setBatchOpen(true)}
-          />
+          isToolRoute ? (
+            <Dropzone
+              onOpenPrivacy={() => setPrivacyOpen(true)}
+              onOpenTerms={() => setTermsOpen(true)}
+              onOpenAbout={() => setAboutOpen(true)}
+              onOpenBatch={() => setBatchOpen(true)}
+              onSelectTool={navigateToTool}
+              onBackHome={navigateHome}
+            />
+          ) : (
+            <HomeHub
+              onSelectTool={navigateToTool}
+              onOpenBatch={() => setBatchOpen(true)}
+              onOpenPrivacy={() => setPrivacyOpen(true)}
+              onOpenTerms={() => setTermsOpen(true)}
+              onOpenAbout={() => setAboutOpen(true)}
+            />
+          )
         ) : (
           <>
             <EditorCanvas stageRef={stageRef} />

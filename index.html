@@ -15,8 +15,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="EverydayCut" />
 
-    <title>EverydayCut - 100% Free Client-Side AI Creative Studio & Background Remover</title>
-    <meta name="description" content="Free, 100% private, on-device AI background remover, magic eraser, and photo editor. No cloud uploads, no subscriptions, unlimited HD exports." />
+    <title>EverydayCut - 100% Free, Unlimited & Private Client-Side Photo & ID Studio</title>
+    <meta name="description" content="Every photo, cutout, and government ID resize tool inside your browser. Free PAN photo cropper (&lt;30 KB), passport photo maker, AI background remover, magic eraser &amp; compressor with zero server uploads." />
     
     <!-- Legacy Hash-Fragment to Clean Path Pre-Hydration Redirect -->
     <script>
@@ -64,15 +64,15 @@
       (function() {
         try {
           var saved = localStorage.getItem('everydaycut_theme');
-          var theme = saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+          var theme = saved === 'dark' ? 'dark' : 'light';
           document.documentElement.classList.add(theme);
         } catch (e) {
-          document.documentElement.classList.add('dark');
+          document.documentElement.classList.add('light');
         }
       })();
     </script>
   </head>
-  <body class="bg-stage text-zinc-900 dark:text-zinc-100 antialiased overflow-x-clip select-none transition-colors duration-200">
+  <body class="bg-stage text-zinc-900 dark:text-zinc-100 antialiased overflow-x-clip transition-colors duration-200">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>

@@ -93,11 +93,8 @@ const getInitialTheme = (): 'light' | 'dark' => {
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('everydaycut_theme');
     if (saved === 'light' || saved === 'dark') return saved;
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-      return 'light';
-    }
   }
-  return 'dark';
+  return 'light';
 };
 
 export const useEditorStore = create<EditorStoreState>((set, get) => ({
@@ -396,15 +393,28 @@ export const useEditorStore = create<EditorStoreState>((set, get) => ({
       case 'youtube_thumb':
         set({
           customDimensions: { width: 1920, height: 1080 },
+          targetMaxSizeBytes: null,
           guideOverlay: 'none',
           aspectRatio: '16:9',
           activeTab: 'text',
         });
         break;
 
+      case 'pinterest':
+        set({
+          customDimensions: { width: 1000, height: 1500 },
+          targetMaxSizeBytes: null,
+          guideOverlay: 'none',
+          aspectRatio: 'original',
+          activeTab: 'background',
+        });
+        break;
+
       case 'eraser':
         set({
           editorMode: 'eraser',
+          customDimensions: null,
+          targetMaxSizeBytes: null,
           guideOverlay: 'none',
         });
         break;
@@ -412,12 +422,16 @@ export const useEditorStore = create<EditorStoreState>((set, get) => ({
       case 'upscale':
         set({
           activeTab: 'enhance',
+          customDimensions: null,
+          targetMaxSizeBytes: null,
           guideOverlay: 'none',
         });
         break;
 
       case 'badges':
         set({
+          customDimensions: { width: 1080, height: 1080 },
+          targetMaxSizeBytes: null,
           activeTab: 'text',
           guideOverlay: 'none',
         });
@@ -425,7 +439,19 @@ export const useEditorStore = create<EditorStoreState>((set, get) => ({
 
       case 'blur_bokeh':
         set({
+          customDimensions: null,
+          targetMaxSizeBytes: null,
           activeTab: 'filters',
+          guideOverlay: 'none',
+        });
+        break;
+
+      case 'etsy':
+      case 'studio_shadow':
+        set({
+          customDimensions: null,
+          targetMaxSizeBytes: null,
+          activeTab: 'shadow',
           guideOverlay: 'none',
         });
         break;

@@ -29,8 +29,10 @@ test.describe('TITAN FORENSIC VERIFICATION SUITE', () => {
     const rootRes = await request.get('/');
     expect(rootRes.status()).toBe(200);
     const rootHtml = await rootRes.text();
-    expect(rootHtml).toMatch(/<title>.*EverydayCut.*<\/title>/i);
+    expect(rootHtml).toMatch(/<title>.*EverydayCut.*Photo (&|&amp;) ID Studio.*<\/title>/i);
+    expect(rootHtml).not.toMatch(/<title>Free AI Background Remover/i);
     expect(rootHtml).toContain('href="https://cut.everydaypdf.me/"');
+    expect(rootHtml).toContain('href="/pan-card-photo-resizer"');
     expect(rootHtml).not.toContain('aggregateRating');
     expect(rootHtml).not.toContain('14820');
 
@@ -286,7 +288,7 @@ test.describe('TITAN FORENSIC VERIFICATION SUITE', () => {
     await context.route('**/*huggingface.co/**', (route) => route.abort());
     await context.route('**/*hf.co/**', (route) => route.abort());
 
-    // 10A: Desktop Landing View native window scroll + zero horizontal overflow
+    // 10A: Desktop Homepage Hub (/) native window scroll (even over sticky header) + zero horizontal overflow
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('/');
     const consentBtn = page.getByRole('button', { name: 'Accept All' });
@@ -300,19 +302,35 @@ test.describe('TITAN FORENSIC VERIFICATION SUITE', () => {
     expect(landingMetrics.scrollWidth).toBeLessThanOrEqual(landingMetrics.innerWidth);
     expect(landingMetrics.scrollHeight).toBeGreaterThan(1500);
 
-    // Mouse wheel & PageDown scroll window cleanly
+    // Mouse wheel over the sticky header itself (y=25) and page body scrolls window cleanly
+    await page.mouse.move(640, 25);
+    await page.mouse.wheel(0, 450);
+    await page.waitForTimeout(100);
+    const scrolledFromHeader = await page.evaluate(() => window.scrollY);
+    expect(scrolledFromHeader).toBeGreaterThan(200);
+
     await page.mouse.move(640, 400);
-    await page.mouse.wheel(0, 900);
+    await page.mouse.wheel(0, 500);
     await page.waitForTimeout(100);
     const scrolledY = await page.evaluate(() => window.scrollY);
-    expect(scrolledY).toBeGreaterThan(400);
+    expect(scrolledY).toBeGreaterThan(500);
 
     // Sticky header remains at top (y === 0)
     const headerBoxLanding = await page.locator('header').boundingBox();
     expect(headerBoxLanding).toBeTruthy();
     expect(headerBoxLanding!.y).toBe(0);
 
-    // 10B: Load image while scrolled down -> Editor View must reset scrollY to 0
+    // Scroll back up cleanly
+    await page.mouse.wheel(0, -1200);
+    await page.waitForTimeout(100);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+
+    // 10B: Navigate from Homepage Hub to a specific tool page and load image while scrolled -> Editor View resets scrollY to 0
+    await page.goto('/image-compressor-converter');
+    await page.mouse.wheel(0, 400);
+    await page.waitForTimeout(100);
+    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(150);
+
     await page.locator('input[type="file"]').setInputFiles('public/samples/portrait.jpg');
     await expect(page.getByRole('button', { name: /Export/i }).first()).toBeVisible({ timeout: 10000 });
     await page.waitForTimeout(100);
@@ -419,7 +437,49 @@ test.describe('TITAN FORENSIC VERIFICATION SUITE', () => {
       };
     });
     expect(mobileLandingMetrics.scrollWidth).toBeLessThanOrEqual(mobileLandingMetrics.innerWidth);
-    expect(mobileLandingMetrics.scrollHeight).toBeGreaterThan(2000);
+    expect(mobileLandingMetrics.scrollHeight).toBeGreaterThan(1400);
     expect(mobileLandingMetrics.windowScrollY).toBeGreaterThan(300);
+  });
+
+  test('11. Homepage Isolation (Not Locked to BG Remover), EverydayPDF Light Theme + Sun/Moon Toggle & All 19 Routes Smoke', async ({ page }) => {
+    const pageErrors: string[] = [];
+    page.on('pageerror', (err) => pageErrors.push(err.message));
+
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    const consentBtn = page.getByRole('button', { name: 'Accept All' });
+    if (await consentBtn.isVisible()) await consentBtn.click();
+
+    // 11A: Root / opens as EverydayCut Studio Homepage (NOT Free AI Background Remover)
+    await expect(page).toHaveTitle(/EverydayCut - 100% Free, Unlimited & Private Client-Side Photo & ID Studio/);
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Every photo & ID tool you need');
+
+    // Default theme on fresh visit must be Light (EverydayPDF style)
+    expect(await page.evaluate(() => document.documentElement.classList.contains('light'))).toBe(true);
+
+    // Toggle Dark -> Light via Sun/Moon button and verify persistence across reload
+    await page.getByRole('button', { name: /Switch to Dark Mode/i }).click();
+    expect(await page.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(true);
+    await page.reload();
+    expect(await page.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(true);
+    await page.getByRole('button', { name: /Switch to Light Mode/i }).click();
+    expect(await page.evaluate(() => document.documentElement.classList.contains('light'))).toBe(true);
+
+    // 11B: Clicking a tool card opens dedicated tool route cleanly, and Back returns to Homepage Hub
+    await page.locator('#studio-catalog a[href="/pan-card-photo-resizer"]').click();
+    await expect(page).toHaveURL(/\/pan-card-photo-resizer$/);
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('PAN Card Photo');
+    await page.getByRole('link', { name: /Back to All 19 Tools/i }).click();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Every photo & ID tool you need');
+
+    // 11C: Every single one of the 19 tool routes renders cleanly with dedicated <h1> and zero exceptions
+    for (const slug of ALL_TOOL_SLUGS) {
+      await page.goto(`/${slug}`);
+      const h1Text = await page.getByRole('heading', { level: 1 }).textContent();
+      expect(h1Text && h1Text.trim().length > 5, `Empty <h1> on /${slug}`).toBe(true);
+    }
+
+    expect(pageErrors).toEqual([]);
   });
 });

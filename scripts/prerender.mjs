@@ -8,6 +8,8 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 const distDir = path.resolve(rootDir, 'dist');
 const siteOrigin = 'https://cut.everydaypdf.me';
+const gscToken = (process.env.VITE_GSC_VERIFICATION || '').trim();
+const gscMetaTag = gscToken ? `<meta name="google-site-verification" content="${gscToken}" />\n    ` : '';
 
 const escapeHtml = (str = '') =>
   String(str)
@@ -185,7 +187,7 @@ for (const tool of tools) {
 
   // Inject Canonical Link & OpenGraph Tags before </head>
   const headInject = `
-    <link rel="canonical" href="${canonicalUrl}" />
+    ${gscMetaTag}<link rel="canonical" href="${canonicalUrl}" />
     <meta property="og:title" content="${escapeHtml(tool.title)}" />
     <meta property="og:description" content="${escapeHtml(tool.metaDescription)}" />
     <meta property="og:url" content="${canonicalUrl}" />
@@ -208,16 +210,20 @@ for (const tool of tools) {
   console.log(`  ✓ Pre-rendered /${tool.slug} -> dist/${tool.slug}/index.html`);
 }
 
-// 2. Pre-render root dist/index.html with clean canonical & root schema
+// 2. Pre-render root dist/index.html with clean EverydayCut Studio Hub HTML, canonical & root schema
 {
   const rootCanonical = `${siteOrigin}/`;
+  const rootTitle = 'EverydayCut - 100% Free, Unlimited & Private Client-Side Photo & ID Studio';
+  const rootDescription =
+    'Every photo, cutout, and government ID resize tool inside your browser. Free PAN photo cropper (<30 KB), passport photo maker, AI background remover, magic eraser & compressor with zero server uploads.';
+
   const rootStructuredData = {
     '@context': 'https://schema.org',
     '@graph': [
       {
         '@type': 'SoftwareApplication',
         '@id': `${siteOrigin}/#software`,
-        name: 'EverydayCut - 100% Free Client-Side AI Creative Studio',
+        name: 'EverydayCut Studio',
         applicationCategory: 'MultimediaApplication',
         operatingSystem: 'All (Browser-Based WebGPU/WASM)',
         browserRequirements: 'Requires modern browser with WebAssembly / WebGPU support',
@@ -229,12 +235,23 @@ for (const tool of tools) {
         featureList: [
           '100% In-Browser AI Background Removal',
           'Zero Cloud Uploads & Local RAM Privacy',
+          'Government Official ID Presets (PAN Card 213x213 <30KB & Passport)',
           'High-Precision 4K Clarity Upscaler',
           'Fast Marching Magic Eraser Inpainting',
-          'Advanced Multi-Stop Linear & Radial Gradient Studio',
-          'Government Official ID Presets (PAN Card & Passport)',
+          'Smart Image Format & Exact KB Compressor',
           'E-Commerce 85% Rule Staging for Amazon & Shopify',
           'Batch Background Removal with ZIP Export',
+        ],
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: rootCanonical,
+          },
         ],
       },
     ],
@@ -242,24 +259,59 @@ for (const tool of tools) {
 
   const rootSchemaScript = `<script type="application/ld+json" id="everydaycut-jsonld">${JSON.stringify(rootStructuredData, null, 2)}</script>`;
 
+  const rootSemanticContent = `
+    <header class="p-4 border-b border-zinc-200 flex justify-between items-center bg-white text-slate-900">
+      <a href="/" class="font-bold text-lg text-emerald-600">EverydayCut Studio</a>
+      <nav class="flex flex-wrap gap-4 text-xs text-slate-600">
+        <a href="/pan-card-photo-resizer">PAN Photo</a>
+        <a href="/background-remover">BG Remover</a>
+        <a href="/magic-eraser">Magic Eraser</a>
+        <a href="/image-compressor-converter">Compressor</a>
+        <a href="https://everydaypdf.me" target="_blank" rel="noopener noreferrer">EverydayPDF.me</a>
+      </nav>
+    </header>
+    <main class="max-w-5xl mx-auto p-6 space-y-8 text-slate-800">
+      <div class="text-center space-y-3">
+        <h1 class="text-3xl font-extrabold text-slate-900">Every photo &amp; ID tool you need, 100% inside your browser.</h1>
+        <h2 class="text-base font-semibold text-emerald-600">Zero Server Uploads &bull; 100% Private On-Device WebGPU &amp; WebAssembly Creative Suite</h2>
+        <p class="text-sm text-slate-600 max-w-2xl mx-auto">${escapeHtml(rootDescription)}</p>
+      </div>
+      <section class="space-y-4">
+        <h3 class="text-lg font-bold text-slate-900">All ${tools.length} Free Client-Side Tools</h3>
+        <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+          ${tools
+            .map(
+              (t) =>
+                `<li class="p-3 rounded-xl border border-zinc-200 bg-white"><a href="/${t.slug}" class="font-bold text-emerald-700 hover:underline">${escapeHtml(t.h1)}</a><p class="text-slate-600 mt-1">${escapeHtml(t.metaDescription)}</p></li>`
+            )
+            .join('')}
+        </ul>
+      </section>
+      <footer class="pt-6 border-t border-zinc-200 text-xs text-slate-500">
+        <a href="https://everydaypdf.me" target="_blank" rel="noopener noreferrer">Need PDF tools? 52+ free client-side tools at EverydayPDF.me</a>
+      </footer>
+    </main>
+  `;
+
   let rootHtml = templateHtml;
   const rootHeadInject = `
-    <link rel="canonical" href="${rootCanonical}" />
-    <meta property="og:title" content="EverydayCut - 100% Free Client-Side AI Creative Studio & Background Remover" />
-    <meta property="og:description" content="Free, 100% private, on-device AI background remover, magic eraser, and photo editor. No cloud uploads, no subscriptions, unlimited HD exports." />
+    ${gscMetaTag}<link rel="canonical" href="${rootCanonical}" />
+    <meta property="og:title" content="${rootTitle}" />
+    <meta property="og:description" content="${escapeHtml(rootDescription)}" />
     <meta property="og:url" content="${rootCanonical}" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="EverydayCut" />
     <meta property="og:image" content="${siteOrigin}/samples/portrait.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="EverydayCut - 100% Free Client-Side AI Creative Studio & Background Remover" />
-    <meta name="twitter:description" content="Free, 100% private, on-device AI background remover, magic eraser, and photo editor. No cloud uploads, no subscriptions, unlimited HD exports." />
+    <meta name="twitter:title" content="${rootTitle}" />
+    <meta name="twitter:description" content="${escapeHtml(rootDescription)}" />
     <meta name="twitter:image" content="${siteOrigin}/samples/portrait.jpg" />
     ${rootSchemaScript}
   `;
   rootHtml = rootHtml.replace('</head>', `${rootHeadInject}\n  </head>`);
+  rootHtml = rootHtml.replace('<div id="root"></div>', `<div id="root">${rootSemanticContent}</div>`);
   fs.writeFileSync(templatePath, rootHtml, 'utf8');
-  console.log(`  ✓ Updated root canonical & schema -> dist/index.html`);
+  console.log(`  ✓ Pre-rendered root hub HTML, canonical & schema -> dist/index.html`);
 }
 
 // 3. Generate Clean XML Sitemap with 0 '#' characters

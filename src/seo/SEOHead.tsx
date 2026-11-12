@@ -58,8 +58,7 @@ export const SEOHead: React.FC<SEOHeadProps> = ({ activeToolPreset }) => {
     setMetaTag('name', 'twitter:description', seo.metaDescription);
     setMetaTag('name', 'twitter:image', `${siteOrigin}/samples/portrait.jpg`);
 
-    // 5. Clean Schema.org JSON-LD (SoftwareApplication + WebApplication + FAQPage + BreadcrumbList)
-    // Removed fabricated aggregateRating per Google Search Essentials guidelines
+    // 5. Clean Schema.org JSON-LD (SoftwareApplication + FAQPage + BreadcrumbList)
     let jsonLdScript = document.getElementById('everydaycut-jsonld') as HTMLScriptElement | null;
     if (!jsonLdScript) {
       jsonLdScript = document.createElement('script');
@@ -74,7 +73,7 @@ export const SEOHead: React.FC<SEOHeadProps> = ({ activeToolPreset }) => {
         {
           '@type': 'SoftwareApplication',
           '@id': `${siteOrigin}/#software`,
-          name: 'EverydayCut',
+          name: activeToolPreset ? `EverydayCut - ${seo.h1}` : 'EverydayCut Studio',
           applicationCategory: 'MultimediaApplication',
           operatingSystem: 'All (Browser-Based WebGPU/WASM)',
           browserRequirements: 'Requires modern browser with WebAssembly / WebGPU support',
@@ -86,10 +85,10 @@ export const SEOHead: React.FC<SEOHeadProps> = ({ activeToolPreset }) => {
           featureList: [
             '100% In-Browser AI Background Removal',
             'Zero Cloud Uploads & Local RAM Privacy',
+            'Government Official ID Presets (PAN Card 213x213 <30KB & Passport)',
             'High-Precision 4K Clarity Upscaler',
             'Fast Marching Magic Eraser Inpainting',
-            'Advanced Multi-Stop Linear & Radial Gradient Studio',
-            'Government Official ID Presets (PAN Card & Passport)',
+            'Smart Image Format & Exact KB Compressor',
             'E-Commerce 85% Rule Staging for Amazon & Shopify',
           ],
         },
@@ -113,14 +112,16 @@ export const SEOHead: React.FC<SEOHeadProps> = ({ activeToolPreset }) => {
               name: 'Home',
               item: `${siteOrigin}/`,
             },
-            ...(activeToolPreset && seo.slug ? [
-              {
-                '@type': 'ListItem',
-                position: 2,
-                name: seo.h1,
-                item: canonicalUrl,
-              },
-            ] : []),
+            ...(activeToolPreset && seo.slug
+              ? [
+                  {
+                    '@type': 'ListItem',
+                    position: 2,
+                    name: seo.h1,
+                    item: canonicalUrl,
+                  },
+                ]
+              : []),
           ],
         },
       ],
@@ -129,22 +130,5 @@ export const SEOHead: React.FC<SEOHeadProps> = ({ activeToolPreset }) => {
     jsonLdScript.textContent = JSON.stringify(structuredData, null, 2);
   }, [seo, activeToolPreset]);
 
-  // Semantic SEO DOM node for crawler indexing (accessible to search engine spiders)
-  return (
-    <section className="sr-only" aria-label="SEO Page Context">
-      <h1>{seo.h1}</h1>
-      <h2>{seo.h2}</h2>
-      <p>{seo.metaDescription}</p>
-      <div itemScope itemType="https://schema.org/FAQPage">
-        {seo.faqs.map((faq, i) => (
-          <article key={i} itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
-            <h3 itemProp="name">{faq.question}</h3>
-            <div itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
-              <p itemProp="text">{faq.answer}</p>
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
+  return null;
 };

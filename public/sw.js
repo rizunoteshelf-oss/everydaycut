@@ -1,5 +1,5 @@
 // EverydayCut Progressive Web App Service Worker (Two-Tier Offline Engine)
-const CACHE_NAME = 'everydaycut-core-v2';
+const CACHE_NAME = 'everydaycut-core-v3';
 
 // Tier 1 Core App Shell & UI Static Assets (Zero heavy WASM in initial precache)
 const PRECACHE_URLS = [

@@ -25,28 +25,9 @@ import { exportCanvasImage } from '../../utils/imageExport.ts';
 import Konva from 'konva';
 import { AspectRatioPreset, ToolPresetId } from '../../engine/state/types.ts';
 import { getSEOEntryByPreset } from '../../seo/seoData.ts';
+import { STUDIO_TOOLS } from '../../config/toolCatalog.ts';
 
-const ALL_HEADER_TOOLS: { id: ToolPresetId; label: string; icon: string; category: string }[] = [
-  { id: 'cutout', label: 'AI Background Remover', icon: '✂️', category: 'AI Neural' },
-  { id: 'eraser', label: 'Magic Eraser (Inpainting)', icon: '🪄', category: 'AI Neural' },
-  { id: 'upscale', label: 'High-Precision 4K Clarity Upscaler', icon: '⚡', category: 'Enhance' },
-  { id: 'pan_photo', label: 'PAN Card Photo (213×213 px)', icon: '🇮🇳', category: 'Official ID' },
-  { id: 'pan_signature', label: 'PAN Signature (400×200 px)', icon: '✍️', category: 'Official ID' },
-  { id: 'passport', label: 'Passport Photo (600×600 px)', icon: '🛂', category: 'Official ID' },
-  { id: 'amazon', label: 'Amazon Product Stager (85%)', icon: '🛒', category: 'E-Commerce' },
-  { id: 'shopify', label: 'Shopify Hero Studio', icon: '🛍️', category: 'E-Commerce' },
-  { id: 'badges', label: 'E-Commerce Sales Badges', icon: '🏷️', category: 'E-Commerce' },
-  { id: 'etsy', label: 'Etsy & eBay Stager', icon: '✨', category: 'E-Commerce' },
-  { id: 'pfp_maker', label: 'Profile Picture (PFP) Maker', icon: '👤', category: 'Social Media' },
-  { id: 'instagram_story', label: 'Instagram Story (9:16)', icon: '📱', category: 'Social Media' },
-  { id: 'youtube_thumb', label: 'YouTube Thumbnail (16:9)', icon: '🖼️', category: 'Social Media' },
-  { id: 'pinterest', label: 'Pinterest Pin (2:3)', icon: '📌', category: 'Social Media' },
-  { id: 'crop', label: 'Lossless Image Cropper', icon: '📐', category: 'Utility' },
-  { id: 'converter', label: 'Image Compressor & Converter', icon: '🗜️', category: 'Utility' },
-  { id: 'blur_bokeh', label: 'Bokeh & Background Blur', icon: '🔮', category: 'Utility' },
-  { id: 'studio_shadow', label: 'Studio Shadows & Lighting', icon: '🎨', category: 'Utility' },
-  { id: 'batch', label: 'Batch Cutout Studio (.ZIP)', icon: '📦', category: 'Bulk Tools' },
-];
+const QUICK_NAV_IDS: ToolPresetId[] = ['pan_photo', 'cutout', 'eraser', 'converter'];
 
 const ASPECT_RATIOS: { id: AspectRatioPreset; label: string; desc: string }[] = [
   { id: 'original', label: 'Original', desc: 'Auto fit' },
@@ -61,6 +42,8 @@ const ASPECT_RATIOS: { id: AspectRatioPreset; label: string; desc: string }[] = 
 interface HeaderBarProps {
   stageRef: React.RefObject<Konva.Stage | null>;
   onNewImage: () => void;
+  onNavigateHome?: () => void;
+  onSelectTool?: (presetId: ToolPresetId) => void;
   onOpenBatch?: () => void;
   onExportSuccess?: () => void;
   onInstallPwa?: () => void;
@@ -71,6 +54,8 @@ interface HeaderBarProps {
 export const HeaderBar: React.FC<HeaderBarProps> = ({
   stageRef,
   onNewImage,
+  onNavigateHome,
+  onSelectTool,
   onOpenBatch,
   onExportSuccess,
   onInstallPwa,
@@ -163,20 +148,38 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
     <header className="sticky top-0 w-full min-w-0 h-14 bg-panel border-b border-borderDark px-2.5 sm:px-4 flex items-center justify-between gap-2 z-30 shrink-0">
       {/* Left: Brand Identity & Batch Mode Trigger */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-500 shrink-0">
-          <Scissors className="w-4 h-4 text-brand-500" />
-        </div>
-        <div className={`flex-col shrink-0 ${layers.length > 0 ? 'hidden sm:flex' : 'flex'}`}>
-          <span className="font-bold text-sm tracking-tight text-zinc-900 dark:text-white flex items-center gap-1.5 whitespace-nowrap">
-            EverydayCut
-            <span className="hidden sm:inline-block text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-600 dark:text-brand-400 border border-brand-500/30 whitespace-nowrap">
-              Free &amp; Client-Side
+        <a
+          href="/"
+          onClick={(e) => {
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            e.preventDefault();
+            setShowToolsMenu(false);
+            if (onNavigateHome) {
+              onNavigateHome();
+            } else {
+              onNewImage();
+              setActivePreset(null);
+              window.history.pushState(null, '', '/');
+            }
+          }}
+          className="flex items-center gap-2 sm:gap-2.5 shrink-0 group"
+          title="EverydayCut Homepage — All Free Client-Side Tools"
+        >
+          <div className="w-8 h-8 rounded-lg bg-brand-500/15 border border-brand-500/30 flex items-center justify-center text-brand-600 dark:text-brand-400 shrink-0 group-hover:scale-105 transition-transform">
+            <Scissors className="w-4 h-4" />
+          </div>
+          <div className={`flex-col shrink-0 ${layers.length > 0 ? 'hidden sm:flex' : 'flex'}`}>
+            <span className="font-extrabold text-sm tracking-tight text-slate-900 dark:text-white flex items-center gap-1.5 whitespace-nowrap">
+              EverydayCut
+              <span className="hidden sm:inline-block text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
+                Free &amp; Client-Side
+              </span>
             </span>
-          </span>
-        </div>
+          </div>
+        </a>
 
         {getPresetLabel() && (
-          <span className="hidden md:inline-flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full bg-brand-500/15 text-brand-600 dark:text-brand-400 border border-brand-500/30 shadow-sm">
+          <span className="hidden xl:inline-flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full bg-brand-500/15 text-brand-700 dark:text-brand-400 border border-brand-500/30 shadow-sm">
             {getPresetLabel()}
           </span>
         )}
@@ -184,81 +187,129 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
         {onOpenBatch && (
           <button
             onClick={onOpenBatch}
-            className="ml-1 sm:ml-2 px-3 py-2 min-h-[44px] text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-zinc-900 dark:hover:text-white bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/30 rounded-lg flex items-center gap-1.5 transition-all shadow-sm"
+            className="hidden md:flex ml-1 px-3 py-2 min-h-[44px] text-xs font-semibold text-brand-700 dark:text-brand-400 hover:text-slate-900 dark:hover:text-white bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/30 rounded-lg items-center gap-1.5 transition-all shadow-xs cursor-pointer"
             title="Batch background removal with ZIP download"
           >
             <Layers className="w-3.5 h-3.5 text-brand-500" />
-            <span className="hidden sm:inline">Batch Cutout</span>
+            <span>Batch Cutout</span>
           </button>
         )}
 
         {isPwaInstallable && !isPwaInstalled && (
           <button
             onClick={onInstallPwa}
-            className="ml-1 sm:ml-2 px-2.5 py-2 min-h-[44px] text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:text-zinc-900 dark:hover:text-white bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-lg flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+            className="ml-1 px-2.5 py-2 min-h-[44px] text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-slate-900 dark:hover:text-white bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-lg flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
             title="Install EverydayCut App to Home Screen"
           >
             <Download className="w-3.5 h-3.5 text-emerald-500" />
             <span className="hidden sm:inline">Install App</span>
           </button>
         )}
-
       </div>
 
-      {/* Middle: Canvas Tools (Aspect Ratio, Quick Actions, Undo/Redo, Zoom) or Landing 19-Tool Dropdown */}
+      {/* Middle: Quick Tool Links + Dynamic All-Tools Dropdown (Landing/Home) OR Canvas Tools (Editor) */}
       {layers.length === 0 ? (
-        <div className="relative">
+        <div className="flex items-center gap-2 relative">
+          <nav className="hidden lg:flex items-center gap-1 mr-1" aria-label="Popular studio tools">
+            {QUICK_NAV_IDS.map((id) => {
+              const tool = STUDIO_TOOLS.find((item) => item.id === id);
+              if (!tool) return null;
+              const seo = getSEOEntryByPreset(tool.id);
+              const isCurrent = activePreset === tool.id;
+              return (
+                <a
+                  key={tool.id}
+                  href={`/${seo.slug}`}
+                  onClick={(e) => {
+                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                    e.preventDefault();
+                    setShowToolsMenu(false);
+                    if (onSelectTool) {
+                      onSelectTool(tool.id);
+                    } else {
+                      setActivePreset(tool.id);
+                      window.history.pushState(null, '', `/${seo.slug}`);
+                    }
+                  }}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
+                    isCurrent
+                      ? 'bg-brand-500/15 text-emerald-700 dark:text-emerald-400'
+                      : 'text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                  }`}
+                >
+                  {tool.shortLabel}
+                </a>
+              );
+            })}
+          </nav>
+
           <button
             onClick={() => setShowToolsMenu(!showToolsMenu)}
-            className="flex items-center gap-2 px-3.5 py-2 min-h-[44px] rounded-xl bg-zinc-100 dark:bg-zinc-800/90 hover:bg-zinc-200 dark:hover:bg-zinc-700/80 text-xs font-semibold text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700/60 shadow-sm transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-xl bg-zinc-100 dark:bg-zinc-800/90 hover:bg-zinc-200 dark:hover:bg-zinc-700/80 text-xs font-semibold text-slate-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700/60 shadow-xs transition-all cursor-pointer whitespace-nowrap"
           >
             <Sparkles className="w-3.5 h-3.5 text-brand-500" />
-            <span>All 19 Tools</span>
+            <span>All Tools ({STUDIO_TOOLS.length})</span>
             <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
           </button>
 
           {showToolsMenu && (
-            <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-80 max-h-[70vh] overflow-y-auto bg-panel border border-borderDark rounded-2xl shadow-2xl py-2 px-1 z-50 divide-y divide-zinc-100 dark:divide-zinc-800">
+            <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-80 max-h-[70vh] overflow-y-auto bg-panel border border-borderDark rounded-2xl shadow-2xl py-2 px-1 z-50 divide-y divide-zinc-100 dark:divide-zinc-800">
               <div className="p-2 flex items-center justify-between">
-                <span className="text-[11px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">
-                  Select Tool ({ALL_HEADER_TOOLS.length})
+                <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                  Select Tool ({STUDIO_TOOLS.length})
                 </span>
-                <button
-                  onClick={() => {
+                <a
+                  href="/#studio-catalog"
+                  onClick={(e) => {
+                    e.preventDefault();
                     setShowToolsMenu(false);
-                    document.getElementById('studio-catalog')?.scrollIntoView({ behavior: 'smooth' });
+                    if (activePreset && onNavigateHome) {
+                      onNavigateHome();
+                    }
+                    setTimeout(() => {
+                      document.getElementById('studio-catalog')?.scrollIntoView({ behavior: 'smooth' });
+                    }, 60);
                   }}
-                  className="text-[10px] text-zinc-500 hover:text-brand-500 hover:underline cursor-pointer"
+                  className="text-[11px] font-semibold text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 hover:underline cursor-pointer"
                 >
                   Full Catalog &darr;
-                </button>
+                </a>
               </div>
 
               <div className="py-1">
-                {ALL_HEADER_TOOLS.map((t) => {
+                {STUDIO_TOOLS.map((t) => {
                   const seo = getSEOEntryByPreset(t.id);
                   return (
                     <a
                       key={t.id}
                       href={`/${seo.slug}`}
                       onClick={(e) => {
+                        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
                         e.preventDefault();
-                        setActivePreset(t.id);
                         setShowToolsMenu(false);
-                        window.history.pushState(null, '', `/${seo.slug}`);
+                        if (onSelectTool) {
+                          onSelectTool(t.id);
+                        } else {
+                          setActivePreset(t.id);
+                          window.history.pushState(null, '', `/${seo.slug}`);
+                        }
                         if (t.id === 'batch' && onOpenBatch) {
                           onOpenBatch();
                         }
                       }}
                       className={`w-full px-3 py-2 text-left rounded-lg text-xs flex items-center justify-between transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer ${
-                        activePreset === t.id ? 'text-brand-500 font-bold bg-brand-500/10' : 'text-zinc-700 dark:text-zinc-300'
+                        activePreset === t.id
+                          ? 'text-emerald-700 dark:text-emerald-400 font-bold bg-brand-500/10'
+                          : 'text-slate-700 dark:text-zinc-300'
                       }`}
                     >
                       <span className="flex items-center gap-2">
-                        <span>{t.icon}</span>
-                        <span>{t.label}</span>
+                        <t.icon className="w-3.5 h-3.5 text-brand-500 shrink-0" />
+                        <span>{t.title}</span>
                       </span>
-                      <span className="text-[10px] text-zinc-400 font-normal">{t.category}</span>
+                      <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-normal shrink-0 ml-2">
+                        {t.categoryLabel}
+                      </span>
                     </a>
                   );
                 })}
@@ -385,10 +436,11 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
           href="https://everydaypdf.me"
           target="_blank"
           rel="noopener noreferrer"
-          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[32px] rounded-full text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 transition-all shadow-sm"
+          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] rounded-full text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 transition-all shadow-xs whitespace-nowrap"
           title="Visit EverydayPDF.me - 52+ Free Client-Side PDF Tools"
         >
-          <span>Need PDF tools? 52+ free at EverydayPDF.me →</span>
+          <span className="xl:hidden">EverydayPDF.me →</span>
+          <span className="hidden xl:inline">Need PDF tools? EverydayPDF.me →</span>
         </a>
 
         {/* Before / After Compare Toggle */}
