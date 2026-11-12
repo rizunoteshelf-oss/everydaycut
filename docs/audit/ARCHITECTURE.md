@@ -123,5 +123,5 @@ Forensic inspection of network traffic and source code confirms:
 2. **Purge Fake Review Schema:** Remove fabricated `aggregateRating` from `SEOHead.tsx`. Implement clean `WebApplication` and `FAQPage` schema only.
 3. **Optimize Service Worker Caching:** Switch WASM binaries to an on-demand, cache-first strategy. Do not precache 32 MB of WASM during service worker installation.
 4. **Eliminate Duplicate WASM Chunks:** Configure Vite build options and `@huggingface/transformers` path resolution so that only a single instance of `ort-wasm-simd-threaded.wasm` is emitted.
-5. **Reintroduce `.nvmrc`:** Pin Node.js to version `20.18.0` for consistent Cloudflare Pages builds.
+5. **Reintroduce `.nvmrc`:** Pin Node.js to version `24.22.3` LTS (since Node 20 reached EOL on March 24, 2026) for consistent Cloudflare Pages builds.
 6. **Implement Unit & Integration Tests:** Leverage the existing `playwright` dependency and add Vitest/Playwright tests for canvas operations, image export, and all 19 tool presets.

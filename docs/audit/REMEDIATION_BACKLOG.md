@@ -81,8 +81,8 @@
   - Shift WASM binaries to an on-demand, cache-first runtime caching strategy.
 - [ ] **[P1] PERF-02: Eliminate Duplicate WASM Chunks in Build Output**
   - Configure Vite to prevent duplicating `ort-wasm-simd-threaded.jsep.wasm` between `dist/assets/` and `dist/wasm/`.
-- [ ] **[P1] PERF-03: Restore `.nvmrc` for Cloudflare Pages**
-  - Re-add `.nvmrc` with Node version `20.18.0` to ensure build environment stability.
+- [x] **[P1] PERF-03: Restore `.nvmrc` for Cloudflare Pages**
+  - Re-add `.nvmrc` with Node version `24.22.3` LTS (upgraded from EOL Node 20.18.0) to ensure build environment stability.
 - [ ] **[P2] PERF-04: Code Splitting & Dynamic Imports**
   - Dynamically import heavy modules (Konva, JSZip) to reduce initial main thread bundle size from 712 kB.
 
