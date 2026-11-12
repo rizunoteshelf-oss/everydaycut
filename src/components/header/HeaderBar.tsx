@@ -15,13 +15,36 @@ import {
   Type,
   Sun,
   Moon,
+  Sparkles,
 } from 'lucide-react';
 import { useEditorStore } from '../../engine/state/editorStore.ts';
 import { useHistoryStore } from '../../engine/state/historyStore.ts';
 import { useStageZoom } from '../../engine/canvas/useStageZoom.ts';
 import { exportCanvasImage } from '../../utils/imageExport.ts';
 import Konva from 'konva';
-import { AspectRatioPreset } from '../../engine/state/types.ts';
+import { AspectRatioPreset, ToolPresetId } from '../../engine/state/types.ts';
+
+const ALL_HEADER_TOOLS: { id: ToolPresetId; label: string; icon: string; category: string }[] = [
+  { id: 'cutout', label: 'AI Background Remover', icon: '✂️', category: 'AI Neural' },
+  { id: 'eraser', label: 'Magic Eraser (Inpainting)', icon: '🪄', category: 'AI Neural' },
+  { id: 'upscale', label: '2x / 4x HD Upscaler', icon: '⚡', category: 'Enhance' },
+  { id: 'pan_photo', label: 'PAN Card Photo (213×213 px)', icon: '🇮🇳', category: 'Official ID' },
+  { id: 'pan_signature', label: 'PAN Signature (400×200 px)', icon: '✍️', category: 'Official ID' },
+  { id: 'passport', label: 'Passport Photo (600×600 px)', icon: '🛂', category: 'Official ID' },
+  { id: 'amazon', label: 'Amazon Product Stager (85%)', icon: '🛒', category: 'E-Commerce' },
+  { id: 'shopify', label: 'Shopify Hero Studio', icon: '🛍️', category: 'E-Commerce' },
+  { id: 'badges', label: 'E-Commerce Sales Badges', icon: '🏷️', category: 'E-Commerce' },
+  { id: 'etsy', label: 'Etsy & eBay Stager', icon: '✨', category: 'E-Commerce' },
+  { id: 'pfp_maker', label: 'Profile Picture (PFP) Maker', icon: '👤', category: 'Social Media' },
+  { id: 'instagram_story', label: 'Instagram Story (9:16)', icon: '📱', category: 'Social Media' },
+  { id: 'youtube_thumb', label: 'YouTube Thumbnail (16:9)', icon: '🖼️', category: 'Social Media' },
+  { id: 'pinterest', label: 'Pinterest Pin (2:3)', icon: '📌', category: 'Social Media' },
+  { id: 'crop', label: 'Lossless Image Cropper', icon: '📐', category: 'Utility' },
+  { id: 'converter', label: 'Image Compressor & Converter', icon: '🗜️', category: 'Utility' },
+  { id: 'blur_bokeh', label: 'Bokeh & Background Blur', icon: '🔮', category: 'Utility' },
+  { id: 'studio_shadow', label: 'Studio Shadows & Lighting', icon: '🎨', category: 'Utility' },
+  { id: 'batch', label: 'Batch Cutout Studio (.ZIP)', icon: '📦', category: 'Bulk Tools' },
+];
 
 const ASPECT_RATIOS: { id: AspectRatioPreset; label: string; desc: string }[] = [
   { id: 'original', label: 'Original', desc: 'Auto fit' },
@@ -65,6 +88,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
     theme,
     toggleTheme,
     activePreset,
+    setActivePreset,
     customDimensions,
     targetMaxSizeBytes,
   } = useEditorStore();
@@ -75,6 +99,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   const [isExporting, setIsExporting] = useState(false);
   const [showAspectMenu, setShowAspectMenu] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showToolsMenu, setShowToolsMenu] = useState(false);
 
   const getPresetLabel = () => {
     switch (activePreset) {
@@ -167,28 +192,63 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
           </button>
         )}
 
-        {/* Cross-Promotion Pill with EverydayPDF */}
-        <a
-          href="https://everydaypdf.me"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hidden xl:inline-flex items-center gap-1.5 ml-2 px-2.5 py-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 rounded-lg transition-all shadow-sm"
-          title="Visit EverydayPDF.me - 52+ Free Client-Side PDF Tools"
-        >
-          <span>Need PDF tools? 52+ free tools at EverydayPDF.me →</span>
-        </a>
       </div>
 
-      {/* Middle: Canvas Tools (Aspect Ratio, Quick Actions, Undo/Redo, Zoom) or Landing Promo */}
+      {/* Middle: Canvas Tools (Aspect Ratio, Quick Actions, Undo/Redo, Zoom) or Landing 19-Tool Dropdown */}
       {layers.length === 0 ? (
-        <a
-          href="https://everydaypdf.me"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 transition-all shadow-sm hover:scale-[1.02]"
-        >
-          <span>Need PDF tools? 52+ free tools at EverydayPDF.me →</span>
-        </a>
+        <div className="relative">
+          <button
+            onClick={() => setShowToolsMenu(!showToolsMenu)}
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800/90 hover:bg-zinc-200 dark:hover:bg-zinc-700/80 text-xs font-semibold text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700/60 shadow-sm transition-all cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-brand-500" />
+            <span>All 19 Tools</span>
+            <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+          </button>
+
+          {showToolsMenu && (
+            <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-80 max-h-[70vh] overflow-y-auto bg-panel border border-borderDark rounded-2xl shadow-2xl py-2 px-1 z-50 divide-y divide-zinc-100 dark:divide-zinc-800">
+              <div className="p-2 flex items-center justify-between">
+                <span className="text-[11px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">
+                  Select Tool ({ALL_HEADER_TOOLS.length})
+                </span>
+                <button
+                  onClick={() => {
+                    setShowToolsMenu(false);
+                    document.getElementById('studio-catalog')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="text-[10px] text-zinc-500 hover:text-brand-500 hover:underline cursor-pointer"
+                >
+                  Full Catalog &darr;
+                </button>
+              </div>
+
+              <div className="py-1">
+                {ALL_HEADER_TOOLS.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => {
+                      setActivePreset(t.id);
+                      setShowToolsMenu(false);
+                      if (t.id === 'batch' && onOpenBatch) {
+                        onOpenBatch();
+                      }
+                    }}
+                    className={`w-full px-3 py-2 text-left rounded-lg text-xs flex items-center justify-between transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer ${
+                      activePreset === t.id ? 'text-brand-500 font-bold bg-brand-500/10' : 'text-zinc-700 dark:text-zinc-300'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span>{t.icon}</span>
+                      <span>{t.label}</span>
+                    </span>
+                    <span className="text-[10px] text-zinc-400 font-normal">{t.category}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       ) : (
         <div className="flex items-center gap-2.5">
           {/* Aspect Ratio Dropdown */}
@@ -302,6 +362,17 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
 
       {/* Right: Actions (Theme Toggle, New & Export) */}
       <div className="flex items-center gap-2">
+        {/* Single Non-Duplicated EverydayPDF Cross-Promotion Pill */}
+        <a
+          href="https://everydaypdf.me"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 transition-all shadow-sm"
+          title="Visit EverydayPDF.me - 52+ Free Client-Side PDF Tools"
+        >
+          <span>Need PDF tools? 52+ free at EverydayPDF.me →</span>
+        </a>
+
         {/* Light / Dark Mode Toggle */}
         <button
           onClick={toggleTheme}

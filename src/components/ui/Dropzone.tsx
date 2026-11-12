@@ -24,6 +24,7 @@ import {
   FileCheck,
   Award,
   Crop,
+  ChevronDown,
 } from 'lucide-react';
 import { segmentationClient } from '../../engine/ml/segmentationClient.ts';
 import { useEditorStore } from '../../engine/state/editorStore.ts';
@@ -645,17 +646,6 @@ export const Dropzone: React.FC<DropzoneProps> = ({
         onChange={onFileSelected}
       />
 
-      {/* Ecosystem Cross-Link Pill with EverydayPDF */}
-      <a
-        href="https://everydaypdf.me"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 text-xs font-semibold mb-3 shadow-sm hover:scale-[1.02] transition-all cursor-pointer"
-        title="Visit EverydayPDF.me - 52+ Free In-Browser PDF Tools"
-      >
-        <span>Need PDF tools? 52+ free tools at EverydayPDF.me →</span>
-      </a>
-
       {/* Studio Header Badge */}
       <div className="text-center mb-6">
         <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-600 dark:text-brand-400 text-xs font-semibold mb-3">
@@ -668,6 +658,53 @@ export const Dropzone: React.FC<DropzoneProps> = ({
         <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-1 max-w-xl mx-auto">
           100% Free &bull; Zero Server Uploads &bull; Processed Securely in Your Browser RAM
         </p>
+      </div>
+
+      {/* Interactive Tool Selector Carousel (Browse all 19 tools immediately above the fold) */}
+      <div className="w-full max-w-4xl mb-6">
+        <div className="flex items-center justify-between px-1 mb-2.5">
+          <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-brand-500" />
+            <span>Select Any Tool ({STUDIO_TOOLS.length} Available)</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => document.getElementById('studio-catalog')?.scrollIntoView({ behavior: 'smooth' })}
+            className="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-500 transition-colors flex items-center gap-1 cursor-pointer"
+          >
+            <span>View Full Catalog ↓</span>
+            <ChevronDown className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Scrollable Tool Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-700">
+          {STUDIO_TOOLS.map((tool) => {
+            const isCurrent = (activePreset || 'cutout') === tool.id;
+            return (
+              <button
+                key={tool.id}
+                type="button"
+                onClick={() => setStorePreset(tool.id)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-all shadow-sm cursor-pointer ${
+                  isCurrent
+                    ? 'bg-brand-500 text-black shadow-md scale-105 ring-2 ring-brand-500/30'
+                    : 'bg-panel border border-borderDark text-zinc-700 dark:text-zinc-300 hover:border-brand-500/60 hover:text-zinc-900 dark:hover:text-white'
+                }`}
+              >
+                <tool.icon className={`w-3.5 h-3.5 ${isCurrent ? 'text-black' : 'text-brand-500'}`} />
+                <span>{tool.title}</span>
+                {tool.isSpecial && (
+                  <span className={`text-[9px] px-1 py-0.2 rounded font-bold uppercase ${
+                    isCurrent ? 'bg-black/20 text-black' : 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                  }`}>
+                    Hot
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Hero Ingestion Box */}
@@ -771,7 +808,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({
       </div>
 
       {/* Studio Hub Catalog */}
-      <div className="mt-14 max-w-5xl w-full">
+      <div id="studio-catalog" className="mt-14 max-w-5xl w-full scroll-mt-6">
         <div className="text-center mb-6">
           <span className="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-widest block mb-1">
             Complete Studio Catalog
