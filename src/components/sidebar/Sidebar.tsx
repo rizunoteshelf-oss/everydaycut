@@ -112,17 +112,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [compressQuality, setCompressQuality] = useState<number>(0.9);
   const [compressMaxKb, setCompressMaxKb] = useState<number | null>(null);
   const [isCompressing, setIsCompressing] = useState<boolean>(false);
+  const [lastCompressInfo, setLastCompressInfo] = useState<string | null>(null);
 
   const handleCompressExport = async () => {
     if (!stageRef?.current) return;
     setIsCompressing(true);
     try {
-      await exportCanvasImage(stageRef.current, {
+      const result = await exportCanvasImage(stageRef.current, {
         format: compressFormat,
         quality: compressQuality,
         fileName: `everydaycut-converted-${Date.now()}`,
         targetMaxSizeBytes: compressMaxKb ? compressMaxKb * 1000 : undefined,
       });
+      setLastCompressInfo(
+        `Exported ${compressFormat.toUpperCase()}: ${(result.sizeBytes / 1000).toFixed(1)} KB (${result.width}×${result.height})`
+      );
     } catch (e) {
       console.error('Conversion export failed:', e);
     } finally {
@@ -133,7 +137,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const handleUpscale = async (factor: 2 | 4) => {
     if (!activeLayer?.src || activeLayer.type === 'text') return;
     setIsUpscaling(true);
-    setUpscaleStatus(`Processing ${factor}x Super-Resolution in browser RAM...`);
+    setUpscaleStatus(`Processing ${factor}x 4K Clarity enhancement in browser RAM...`);
 
     try {
       const img = new Image();
@@ -191,7 +195,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">Studio Controls</span>
           <button
             onClick={onCloseMobile}
-            className="p-1 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800 transition-colors"
+            aria-label="Close Studio Controls"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -379,7 +384,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         <button
           onClick={() => setActiveTab('enhance')}
-          title="AI Tools: Magic Eraser & Super-Resolution"
+          title="AI Tools: Magic Eraser & 4K Clarity Upscaler"
           className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg text-[10px] font-semibold transition-all ${
             activeTab === 'enhance'
               ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm'
@@ -1086,7 +1091,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               )}
 
               {/* Strict KB Target Limits */}
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <span className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300">File Budget Limit</span>
                 <div className="grid grid-cols-5 gap-1 text-[10px]">
                   {[
@@ -1109,19 +1114,42 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     </button>
                   ))}
                 </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <label htmlFor="custom-kb-budget" className="text-[10px] text-zinc-500 dark:text-zinc-400 shrink-0">
+                    Custom KB:
+                  </label>
+                  <input
+                    id="custom-kb-budget"
+                    type="number"
+                    min={5}
+                    max={5000}
+                    placeholder="e.g. 45"
+                    value={compressMaxKb ?? ''}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      setCompressMaxKb(raw ? Math.max(5, Number(raw)) : null);
+                    }}
+                    className="w-full px-2 py-1 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-white"
+                  />
+                </div>
               </div>
 
               {/* Instant Export Button */}
               <button
                 onClick={handleCompressExport}
                 disabled={isCompressing || !activeLayer?.src}
-                className="w-full py-2.5 px-3 rounded-lg bg-brand-500 hover:bg-brand-600 text-black font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 disabled:opacity-40"
+                className="w-full min-h-[44px] py-2.5 px-3 rounded-lg bg-brand-500 hover:bg-brand-600 text-black font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 disabled:opacity-40"
               >
                 {isCompressing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                 <span>
                   Export {compressFormat.toUpperCase()} ({Math.round(compressQuality * 100)}% Qual{compressMaxKb ? ` • <${compressMaxKb}KB` : ''})
                 </span>
               </button>
+              {lastCompressInfo && (
+                <div className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2.5 py-1.5">
+                  {lastCompressInfo}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1170,6 +1198,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
           <button onClick={onOpenTerms} className="min-h-[44px] px-1 flex items-center hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
             Terms
+          </button>
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event('everydaycut:open-cookie-settings'))}
+            className="min-h-[44px] px-1 flex items-center hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors"
+          >
+            Cookies
           </button>
         </div>
       </footer>

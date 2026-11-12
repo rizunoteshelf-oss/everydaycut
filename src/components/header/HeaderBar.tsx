@@ -16,6 +16,7 @@ import {
   Sun,
   Moon,
   Sparkles,
+  Columns2,
 } from 'lucide-react';
 import { useEditorStore } from '../../engine/state/editorStore.ts';
 import { useHistoryStore } from '../../engine/state/historyStore.ts';
@@ -28,7 +29,7 @@ import { getSEOEntryByPreset } from '../../seo/seoData.ts';
 const ALL_HEADER_TOOLS: { id: ToolPresetId; label: string; icon: string; category: string }[] = [
   { id: 'cutout', label: 'AI Background Remover', icon: '✂️', category: 'AI Neural' },
   { id: 'eraser', label: 'Magic Eraser (Inpainting)', icon: '🪄', category: 'AI Neural' },
-  { id: 'upscale', label: '2x / 4x HD Upscaler', icon: '⚡', category: 'Enhance' },
+  { id: 'upscale', label: 'High-Precision 4K Clarity Upscaler', icon: '⚡', category: 'Enhance' },
   { id: 'pan_photo', label: 'PAN Card Photo (213×213 px)', icon: '🇮🇳', category: 'Official ID' },
   { id: 'pan_signature', label: 'PAN Signature (400×200 px)', icon: '✍️', category: 'Official ID' },
   { id: 'passport', label: 'Passport Photo (600×600 px)', icon: '🛂', category: 'Official ID' },
@@ -92,6 +93,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
     setActivePreset,
     customDimensions,
     targetMaxSizeBytes,
+    originalImageSrc,
+    showBeforeAfter,
+    setShowBeforeAfter,
   } = useEditorStore();
 
   const { canUndo, canRedo } = useHistoryStore();
@@ -180,7 +184,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
         {onOpenBatch && (
           <button
             onClick={onOpenBatch}
-            className="ml-1 sm:ml-2 px-3 py-1.5 min-h-[32px] text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-zinc-900 dark:hover:text-white bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/30 rounded-lg flex items-center gap-1.5 transition-all shadow-sm"
+            className="ml-1 sm:ml-2 px-3 py-2 min-h-[44px] text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-zinc-900 dark:hover:text-white bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/30 rounded-lg flex items-center gap-1.5 transition-all shadow-sm"
             title="Batch background removal with ZIP download"
           >
             <Layers className="w-3.5 h-3.5 text-brand-500" />
@@ -191,7 +195,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
         {isPwaInstallable && !isPwaInstalled && (
           <button
             onClick={onInstallPwa}
-            className="ml-1 sm:ml-2 px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:text-zinc-900 dark:hover:text-white bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-lg flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+            className="ml-1 sm:ml-2 px-2.5 py-2 min-h-[44px] text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:text-zinc-900 dark:hover:text-white bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-lg flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
             title="Install EverydayCut App to Home Screen"
           >
             <Download className="w-3.5 h-3.5 text-emerald-500" />
@@ -206,7 +210,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
         <div className="relative">
           <button
             onClick={() => setShowToolsMenu(!showToolsMenu)}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800/90 hover:bg-zinc-200 dark:hover:bg-zinc-700/80 text-xs font-semibold text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700/60 shadow-sm transition-all cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 min-h-[44px] rounded-xl bg-zinc-100 dark:bg-zinc-800/90 hover:bg-zinc-200 dark:hover:bg-zinc-700/80 text-xs font-semibold text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700/60 shadow-sm transition-all cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5 text-brand-500" />
             <span>All 19 Tools</span>
@@ -386,11 +390,29 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
           <span>Need PDF tools? 52+ free at EverydayPDF.me →</span>
         </a>
 
+        {/* Before / After Compare Toggle */}
+        {layers.length > 0 && originalImageSrc && (
+          <button
+            type="button"
+            onClick={() => setShowBeforeAfter(!showBeforeAfter)}
+            aria-label="Toggle Before and After comparison slider"
+            className={`px-3 py-2 min-h-[44px] text-xs font-semibold rounded-lg border flex items-center gap-1.5 transition-all shadow-sm ${
+              showBeforeAfter
+                ? 'bg-brand-500 text-black border-brand-500'
+                : 'text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:hover:bg-zinc-800 border-zinc-200 dark:border-zinc-700/60'
+            }`}
+            title="Compare Original vs. Processed Result"
+          >
+            <Columns2 className="w-3.5 h-3.5" />
+            <span className="hidden lg:inline">{showBeforeAfter ? 'Comparing' : 'Compare'}</span>
+          </button>
+        )}
+
         {/* Light / Dark Mode Toggle */}
         <button
           onClick={toggleTheme}
           aria-label={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
-          className="p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-700/60 transition-all shadow-sm"
+          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-700/60 transition-all shadow-sm"
           title={`Switch to ${theme === 'dark' ? 'White/Light' : 'Dark'} Mode`}
         >
           {theme === 'dark' ? (
@@ -403,7 +425,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
         {layers.length > 0 && (
           <button
             onClick={onNewImage}
-            className="px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/60 rounded-lg flex items-center gap-1.5 transition-colors"
+            className="px-3 py-2 min-h-[44px] text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/60 rounded-lg flex items-center gap-1.5 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New</span>
@@ -415,7 +437,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
             <button
               onClick={() => setShowExportMenu(!showExportMenu)}
               disabled={isExporting}
-              className="px-4 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-black font-semibold text-xs transition-all shadow-md flex items-center gap-1.5 disabled:opacity-50"
+              className="px-4 py-2 min-h-[44px] rounded-lg bg-brand-500 hover:bg-brand-600 text-black font-semibold text-xs transition-all shadow-md flex items-center gap-1.5 disabled:opacity-50"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export</span>

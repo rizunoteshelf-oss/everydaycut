@@ -85,11 +85,11 @@ export const AdBannerSlot: React.FC<AdBannerSlotProps> = ({ placement }) => {
     );
   }
 
-  // 300x250 medium rectangle for desktop sidebar with 40px buffer
+  // 300x250 medium rectangle for desktop sidebar with 40px click buffer
   return (
     <aside
       aria-label="Advertisement"
-      className="w-[300px] h-[250px] min-w-[300px] min-h-[250px] mx-auto my-6 bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 rounded-lg flex items-center justify-center relative overflow-hidden shrink-0 shadow-sm"
+      className="w-[300px] h-[250px] min-w-[300px] min-h-[250px] mx-auto my-10 bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 rounded-lg flex items-center justify-center relative overflow-hidden shrink-0 shadow-sm"
     >
       {hasSidebar ? (
         <ins

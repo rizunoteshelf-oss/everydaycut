@@ -174,7 +174,8 @@ export const BatchStudio: React.FC<BatchStudioProps> = ({ isOpen, onClose }) => 
 
             <button
               onClick={onClose}
-              className="p-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+              aria-label="Close Batch Studio"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>

@@ -9,6 +9,13 @@ const rootDir = path.resolve(__dirname, '..');
 const distDir = path.resolve(rootDir, 'dist');
 const siteOrigin = 'https://cut.everydaypdf.me';
 
+const escapeHtml = (str = '') =>
+  String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
 if (!fs.existsSync(distDir)) {
   console.error('[Prerender] dist directory not found! Run vite build first.');
   process.exit(1);
@@ -166,28 +173,28 @@ for (const tool of tools) {
   let html = templateHtml;
 
   // Replace Title
-  html = html.replace(/<title>.*?<\/title>/i, `<title>${tool.title}</title>`);
+  html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(tool.title)}</title>`);
 
   // Replace or inject Description
   if (/<meta\s+name=["']description["']/i.test(html)) {
     html = html.replace(
       /<meta\s+name=["']description["'][^>]*>/i,
-      `<meta name="description" content="${tool.metaDescription}" />`
+      `<meta name="description" content="${escapeHtml(tool.metaDescription)}" />`
     );
   }
 
   // Inject Canonical Link & OpenGraph Tags before </head>
   const headInject = `
     <link rel="canonical" href="${canonicalUrl}" />
-    <meta property="og:title" content="${tool.title}" />
-    <meta property="og:description" content="${tool.metaDescription}" />
+    <meta property="og:title" content="${escapeHtml(tool.title)}" />
+    <meta property="og:description" content="${escapeHtml(tool.metaDescription)}" />
     <meta property="og:url" content="${canonicalUrl}" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="EverydayCut" />
     <meta property="og:image" content="${siteOrigin}/samples/portrait.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="${tool.title}" />
-    <meta name="twitter:description" content="${tool.metaDescription}" />
+    <meta name="twitter:title" content="${escapeHtml(tool.title)}" />
+    <meta name="twitter:description" content="${escapeHtml(tool.metaDescription)}" />
     <meta name="twitter:image" content="${siteOrigin}/samples/portrait.jpg" />
     ${schemaScript}
   `;

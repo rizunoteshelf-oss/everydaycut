@@ -17,6 +17,10 @@ export const CookieConsentBanner: React.FC<CookieConsentBannerProps> = ({ onOpen
     } catch (_) {
       // In private browsing mode or storage disabled
     }
+
+    const handleOpenSettings = () => setIsVisible(true);
+    window.addEventListener('everydaycut:open-cookie-settings', handleOpenSettings);
+    return () => window.removeEventListener('everydaycut:open-cookie-settings', handleOpenSettings);
   }, []);
 
   const handleConsent = (status: 'accepted' | 'declined') => {

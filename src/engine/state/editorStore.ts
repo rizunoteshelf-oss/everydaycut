@@ -33,9 +33,13 @@ interface EditorStoreState {
   customDimensions: CanvasDimensions | null;
   targetMaxSizeBytes: number | null;
   autoCutoutDocument: boolean;
+  originalImageSrc: string | null;
+  showBeforeAfter: boolean;
 
   // Actions
   setAutoCutoutDocument: (enabled: boolean) => void;
+  setOriginalImageSrc: (src: string | null) => void;
+  setShowBeforeAfter: (show: boolean) => void;
   setLayers: (layers: Layer[]) => void;
   addLayer: (layer: Layer) => void;
   addTextLayer: (config?: Partial<TextConfig>) => void;
@@ -112,6 +116,8 @@ export const useEditorStore = create<EditorStoreState>((set, get) => ({
   customDimensions: null,
   targetMaxSizeBytes: null,
   autoCutoutDocument: true,
+  originalImageSrc: null,
+  showBeforeAfter: false,
   segmentationProgress: {
     status: 'idle',
     progress: 0,
@@ -119,6 +125,8 @@ export const useEditorStore = create<EditorStoreState>((set, get) => ({
   },
 
   setAutoCutoutDocument: (autoCutoutDocument) => set({ autoCutoutDocument }),
+  setOriginalImageSrc: (originalImageSrc) => set({ originalImageSrc }),
+  setShowBeforeAfter: (showBeforeAfter) => set({ showBeforeAfter }),
   setLayers: (layers) => set({ layers }),
 
   addLayer: (layer) => {
@@ -511,7 +519,15 @@ export const useEditorStore = create<EditorStoreState>((set, get) => ({
   },
 
   reset: () => {
-    get().layers.forEach((l) => {
+    const { originalImageSrc, layers } = get();
+    if (originalImageSrc?.startsWith('blob:')) {
+      try {
+        URL.revokeObjectURL(originalImageSrc);
+      } catch {
+        // ignore
+      }
+    }
+    layers.forEach((l) => {
       if (l.src?.startsWith('blob:')) {
         try {
           URL.revokeObjectURL(l.src);
@@ -532,6 +548,8 @@ export const useEditorStore = create<EditorStoreState>((set, get) => ({
       guideOverlay: 'none',
       customDimensions: null,
       targetMaxSizeBytes: null,
+      originalImageSrc: null,
+      showBeforeAfter: false,
       segmentationProgress: { status: 'idle', progress: 0, message: '' },
     });
     useHistoryStore.getState().clear();

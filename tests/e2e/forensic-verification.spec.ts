@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'fs';
-import { resolve } from 'path';
 
 const ALL_TOOL_SLUGS = [
   'background-remover',
@@ -25,46 +24,44 @@ const ALL_TOOL_SLUGS = [
 ];
 
 test.describe('TITAN FORENSIC VERIFICATION SUITE', () => {
-  test('1. Static Pre-rendered SSG HTML & SEO Metadata across all 19 tools + Root', async ({ page }) => {
-    // Check root
-    const rootRes = await page.goto('/');
-    expect(rootRes?.status()).toBe(200);
-    const rootTitle = await page.title();
-    expect(rootTitle).toContain('EverydayCut');
-    const rootCanonical = await page.locator('link[rel="canonical"]').getAttribute('href');
-    expect(rootCanonical).toBe('https://cut.everydaypdf.me/');
-    expect(rootCanonical).not.toContain('#');
+  test('1. Static Pre-rendered SSG Raw HTML & SEO Metadata across all 19 tools + Root (Non-JS)', async ({ request }) => {
+    // 1A: Verify raw HTTP HTML for Root (no client JS execution)
+    const rootRes = await request.get('/');
+    expect(rootRes.status()).toBe(200);
+    const rootHtml = await rootRes.text();
+    expect(rootHtml).toMatch(/<title>.*EverydayCut.*<\/title>/i);
+    expect(rootHtml).toContain('href="https://cut.everydaypdf.me/"');
+    expect(rootHtml).not.toContain('aggregateRating');
+    expect(rootHtml).not.toContain('14820');
 
-    // Check each of the 19 tool landing pages
+    const seenTitles = new Set<string>();
+
+    // 1B: Verify raw HTTP HTML for every single one of the 19 pre-rendered tool routes
     for (const slug of ALL_TOOL_SLUGS) {
-      const res = await page.goto(`/${slug}`);
-      expect(res?.status()).toBe(200);
+      const res = await request.get(`/${slug}/`);
+      expect(res.status()).toBe(200);
+      const html = await res.text();
 
-      // Verify Title & Meta Description
-      const title = await page.title();
+      const titleMatch = html.match(/<title>([\s\S]*?)<\/title>/i);
+      expect(titleMatch, `Missing <title> in raw HTML for /${slug}`).toBeTruthy();
+      const title = titleMatch![1].trim();
       expect(title.length).toBeGreaterThan(15);
+      expect(seenTitles.has(title), `Duplicate <title> on /${slug}: ${title}`).toBe(false);
+      seenTitles.add(title);
 
-      const metaDesc = await page.locator('meta[name="description"]').getAttribute('content');
-      expect(metaDesc).toBeTruthy();
-      expect(metaDesc!.length).toBeGreaterThan(40);
+      const descMatch = html.match(/<meta\s+name="description"\s+content="([^"]+)"/i);
+      expect(descMatch, `Missing meta description in raw HTML for /${slug}`).toBeTruthy();
+      expect(descMatch![1].length).toBeGreaterThan(40);
 
-      // Verify Canonical URL is clean RFC 6596 without hash
-      const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
-      expect(canonical).toBe(`https://cut.everydaypdf.me/${slug}`);
-      expect(canonical).not.toContain('#');
+      const canonicalMatch = html.match(/<link\s+rel="canonical"\s+href="([^"]+)"/i);
+      expect(canonicalMatch, `Missing canonical link in raw HTML for /${slug}`).toBeTruthy();
+      expect(canonicalMatch![1]).toBe(`https://cut.everydaypdf.me/${slug}`);
+      expect(canonicalMatch![1]).not.toContain('#');
 
-      // Verify Static H1 exists
-      const h1Count = await page.locator('h1').count();
-      expect(h1Count).toBeGreaterThan(0);
-
-      // Verify JSON-LD Schema: Ensure ZERO fabricated review schema
-      const jsonLdElements = await page.locator('script[type="application/ld+json"]').all();
-      for (const el of jsonLdElements) {
-        const text = await el.textContent();
-        expect(text).not.toContain('aggregateRating');
-        expect(text).not.toContain('14820');
-        expect(text).not.toContain('ratingValue');
-      }
+      expect(html).toMatch(/<h1[^>]*>[^<]+<\/h1>/i);
+      expect(html).not.toContain('aggregateRating');
+      expect(html).not.toContain('14820');
+      expect(html).not.toContain('ratingValue');
     }
   });
 
@@ -82,99 +79,198 @@ test.describe('TITAN FORENSIC VERIFICATION SUITE', () => {
     expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
     expect(xml).toContain('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"');
 
-    // Must contain root and all 19 tools
     expect(xml).toContain('<loc>https://cut.everydaypdf.me/</loc>');
     for (const slug of ALL_TOOL_SLUGS) {
       expect(xml).toContain(`<loc>https://cut.everydaypdf.me/${slug}</loc>`);
     }
 
-    // Must contain zero hash fragments
     expect(xml).not.toContain('#');
   });
 
-  test('4. Zero-Upload Network Verification (100% Client-Side Privacy)', async ({ page }) => {
-    const outboundUploads: string[] = [];
+  test('4. Zero-Upload Network Verification during real image ingestion (100% Client-Side Privacy)', async ({ page }) => {
+    const forbiddenRequests: string[] = [];
 
     page.on('request', (req) => {
       const url = req.url();
       const method = req.method();
-      // Track any request sending post body or uploading files outside localhost
-      if (method === 'POST' && !url.includes('localhost') && !url.includes('127.0.0.1')) {
-        const postData = req.postData();
-        if (postData && postData.length > 500) {
-          outboundUploads.push(`${method} ${url} (${postData.length} bytes)`);
-        }
+      const isAllowedOrigin =
+        url.startsWith('http://localhost') ||
+        url.startsWith('http://127.0.0.1') ||
+        url.startsWith('data:') ||
+        url.startsWith('blob:') ||
+        url.includes('huggingface.co') ||
+        url.includes('hf.co') ||
+        url.includes('googlesyndication.com') ||
+        url.includes('adtrafficquality.google') ||
+        url.includes('doubleclick.net') ||
+        url.includes('adservice.google.com') ||
+        url.includes('fundingchoicesmessages.google.com');
+
+      if (method === 'POST' || method === 'PUT' || !isAllowedOrigin) {
+        forbiddenRequests.push(`${method} ${url}`);
       }
     });
 
-    await page.goto('/background-remover');
-    // Ensure zero telemetry or image upload requests
-    expect(outboundUploads.length).toBe(0);
+    await page.goto('/image-compressor-converter');
+    // Dismiss consent banner if visible
+    const acceptBtn = page.getByRole('button', { name: 'Accept All' });
+    if (await acceptBtn.isVisible()) await acceptBtn.click();
+
+    // Load local sample image directly into canvas
+    await page.locator('input[type="file"]').setInputFiles('public/samples/portrait.jpg');
+    await expect(page.getByRole('button', { name: /Export/i }).first()).toBeVisible({ timeout: 10000 });
+
+    expect(forbiddenRequests).toEqual([]);
   });
 
-  test('5. India Document Photography Compliance & Non-Affiliation Disclaimers', async ({ page }) => {
+  test('5. India Document Photography Compliance (213x213 300 DPI <30KB PAN Photo & 400x200 <20KB Signature + Disclaimers)', async ({ page, context }) => {
+    // Avoid downloading 44MB external model weights during automated CI E2E (intercept Worker fetches too via context.route)
+    await context.route('**/*huggingface.co/**', (route) => route.abort());
+    await context.route('**/*hf.co/**', (route) => route.abort());
+
     // 5A: PAN Card Photo Resizer
     await page.goto('/pan-card-photo-resizer');
-    const panText = await page.textContent('body');
-    expect(panText).toContain('213×213');
-    expect(panText).toContain('300 DPI');
-    expect(panText).toContain('30 KB');
+    const consentBtn = page.getByRole('button', { name: 'Accept All' });
+    if (await consentBtn.isVisible()) await consentBtn.click();
 
-    // 5B: PAN Card Signature Cropper
+    await page.locator('input[type="file"]').setInputFiles('public/samples/portrait.jpg');
+    await expect(page.getByText('213×213 px OK')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('300 DPI Embedded')).toBeVisible();
+    await expect(page.getByText('<30 KB Target')).toBeVisible();
+    await expect(page.getByText(/not affiliated with, endorsed by, or connected to NSDL/i)).toBeVisible();
+
+    // Export JPEG and inspect real binary bytes for <30KB and JFIF 300 DPI (01 01 01 2C 01 2C)
+    const [panDownload] = await Promise.all([
+      page.waitForEvent('download'),
+      (async () => {
+        await page.getByRole('button', { name: /^Export$/i }).first().click();
+        await page.getByRole('button', { name: /JPEG Image/i }).click();
+      })(),
+    ]);
+    const panPath = await panDownload.path();
+    expect(panPath).toBeTruthy();
+    const panBytes = readFileSync(panPath!);
+    expect(panBytes.length).toBeGreaterThan(500);
+    expect(panBytes.length).toBeLessThanOrEqual(30000);
+    // Verify JPEG SOI (FF D8) and JFIF 300 DPI density tag (units=01, X=01 2C, Y=01 2C)
+    expect(panBytes[0]).toBe(0xff);
+    expect(panBytes[1]).toBe(0xd8);
+    expect(panBytes.includes(Buffer.from([0x01, 0x01, 0x2c, 0x01, 0x2c]))).toBe(true);
+
+    // 5B: PAN Card Signature Cropper (<20 KB JPEG + 400x200 + 300 DPI)
     await page.goto('/pan-card-signature-cropper');
-    const sigText = await page.textContent('body');
-    expect(sigText).toContain('400×200');
-    expect(sigText).toContain('20 KB');
+    await page.locator('input[type="file"]').setInputFiles('public/samples/signature.jpg');
+    await expect(page.getByText('400×200 px OK')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('<20 KB Target')).toBeVisible();
 
-    // 5C: Passport Photo Maker
-    await page.goto('/passport-photo-maker');
-    const passportText = await page.textContent('body');
-    expect(passportText).toContain('600×600');
-    expect(passportText).toContain('Passport');
+    const [sigDownload] = await Promise.all([
+      page.waitForEvent('download'),
+      (async () => {
+        await page.getByRole('button', { name: /^Export$/i }).first().click();
+        await page.getByRole('button', { name: /JPEG Image/i }).click();
+      })(),
+    ]);
+    const sigPath = await sigDownload.path();
+    expect(sigPath).toBeTruthy();
+    const sigBytes = readFileSync(sigPath!);
+    expect(sigBytes.length).toBeGreaterThan(500);
+    expect(sigBytes.length).toBeLessThanOrEqual(20000);
+    expect(sigBytes.includes(Buffer.from([0x01, 0x01, 0x2c, 0x01, 0x2c]))).toBe(true);
   });
 
-  test('6. Compressor & Format Converter WebP / JPEG Export UI', async ({ page }) => {
+  test('6. Compressor & Format Converter exports valid WebP with KB controls', async ({ page }) => {
     await page.goto('/image-compressor-converter');
-    const body = await page.textContent('body');
-    expect(body).toContain('Format & Size Compressor');
-    expect(body).toContain('WebP');
+    const consentBtn = page.getByRole('button', { name: 'Accept All' });
+    if (await consentBtn.isVisible()) await consentBtn.click();
+
+    await page.locator('input[type="file"]').setInputFiles('public/samples/sneakers.jpg');
+    await expect(page.getByText('Image Compressor & Format Converter')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByLabel('Custom KB:')).toBeVisible();
+
+    // Trigger WebP export via dedicated converter studio button
+    const [webpDownload] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: /Export WEBP/i }).click(),
+    ]);
+    expect(webpDownload.suggestedFilename()).toMatch(/\.webp$/i);
+    const webpPath = await webpDownload.path();
+    const webpBytes = readFileSync(webpPath!);
+    // Valid RIFF....WEBP magic header
+    expect(webpBytes.subarray(0, 4).toString('ascii')).toBe('RIFF');
+    expect(webpBytes.subarray(8, 12).toString('ascii')).toBe('WEBP');
   });
 
-  test('7. Rule-of-Thirds Cropper and Bokeh Blur Tool presence', async ({ page }) => {
-    await page.goto('/crop-image-aspect-ratio');
-    const cropBody = await page.textContent('body');
-    expect(cropBody).toContain('Crop & Aspect Ratio');
+  test('7. Bokeh dual-layer (blurred BG + sharp FG), Before/After slider, and Upscaler accuracy', async ({ page, context }) => {
+    await context.route('**/*huggingface.co/**', (route) => route.abort());
+    await context.route('**/*hf.co/**', (route) => route.abort());
 
     await page.goto('/blur-background-bokeh');
-    const bokehBody = await page.textContent('body');
-    expect(bokehBody).toContain('Bokeh / Background Blur');
+    const consentBtn = page.getByRole('button', { name: 'Accept All' });
+    if (await consentBtn.isVisible()) await consentBtn.click();
+
+    await page.locator('input[type="file"]').setInputFiles('public/samples/portrait.jpg');
+    await expect(page.getByText(/Dual-layer depth active/i)).toBeVisible({ timeout: 10000 });
+
+    // Verify 2 distinct layers in store: Layer 0 blurred (14) and Layer 1 sharp (0)
+    const layers = await page.evaluate(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const st = (window as any).__editorStore.getState();
+      return st.layers.map((l: { name: string; filters: { blur: number } }) => ({
+        name: l.name,
+        blur: l.filters.blur,
+      }));
+    });
+    expect(layers.length).toBe(2);
+    expect(layers[0].blur).toBeGreaterThan(0);
+    expect(layers[1].blur).toBe(0);
+
+    // Toggle Before / After Split Comparison Slider and confirm accessibility slider role renders
+    await page.getByRole('button', { name: /Toggle Before and After/i }).click();
+    await expect(page.getByRole('slider', { name: /Compare before and after/i })).toBeVisible();
+    await page.getByRole('button', { name: /Exit Compare/i }).click();
+
+    // Check Upscaler page uses accurate copy (no fake "AI Super-Resolution")
+    await page.goto('/image-upscaler');
+    const upscaleText = await page.textContent('body');
+    expect(upscaleText).toContain('High-Precision 4K Clarity Upscaler');
+    expect(upscaleText).not.toContain('Super-Resolution');
   });
 
-  test('8. Modal Escape dismissal & Accessible Touch Targets', async ({ page }) => {
+  test('8. Modal Escape dismissal & 44x44px Accessible Touch Targets', async ({ page }) => {
     await page.goto('/');
+    const consentBtn = page.getByRole('button', { name: 'Accept All' });
+    if (await consentBtn.isVisible()) await consentBtn.click();
 
-    // Check footer About button and open modal
-    const aboutBtn = page.getByRole('button', { name: /About/i }).first();
-    await aboutBtn.click();
-    await expect(page.getByRole('dialog', { name: 'About EverydayCut' })).toBeVisible();
+    // Open About dialog and check close button >= 44x44 and Escape dismissal
+    await page.getByRole('button', { name: /About EverydayCut/i }).first().click();
+    const aboutDialog = page.getByRole('dialog', { name: 'About EverydayCut' });
+    await expect(aboutDialog).toBeVisible();
 
-    // Press Escape to dismiss
+    const closeBtn = page.getByRole('button', { name: 'Close About dialog' });
+    const closeBox = await closeBtn.boundingBox();
+    expect(closeBox).toBeTruthy();
+    expect(closeBox!.width).toBeGreaterThanOrEqual(44);
+    expect(closeBox!.height).toBeGreaterThanOrEqual(44);
+
     await page.keyboard.press('Escape');
-    await expect(page.getByRole('dialog', { name: 'About EverydayCut' })).not.toBeVisible();
+    await expect(aboutDialog).not.toBeVisible();
 
-    // Check touch target heights on main action buttons
-    const primaryPills = await page.locator('nav a, header button, footer button').all();
-    for (const pill of primaryPills.slice(0, 10)) {
-      const box = await pill.boundingBox();
+    // Check header & footer primary interactive buttons meet >= 44px height
+    const primaryControls = await page.locator('header button:visible, footer button:visible').all();
+    expect(primaryControls.length).toBeGreaterThan(0);
+    for (const ctrl of primaryControls) {
+      const box = await ctrl.boundingBox();
       if (box && box.height > 0) {
-        // Enforce touch target accessibility
-        expect(box.height).toBeGreaterThanOrEqual(28);
+        expect(box.height).toBeGreaterThanOrEqual(44);
       }
     }
   });
 
-  test('9. Google AdSense Zero-CLS & Zero-Fake-Slot Compliance', async ({ page }) => {
+  test('9. Google AdSense Zero-CLS, Zero-Fake-Slot & Consent Mode v2 Compliance', async ({ page }) => {
     await page.goto('/');
+
+    // Cookie consent banner visible on first visit
+    await expect(page.getByRole('complementary', { name: 'Cookie consent banner' })).toBeVisible();
 
     // Ensure no <ins> elements have fake non-numeric strings like "leaderboard-desktop"
     const insElements = await page.locator('ins.adsbygoogle').all();

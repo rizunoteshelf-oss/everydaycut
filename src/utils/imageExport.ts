@@ -84,11 +84,11 @@ async function canvasToBlobWithLimit(
     rawBlob = await makeBlob(fallbackQuality);
   } else {
     // Binary search for exact optimal JPEG / WebP quality
-    let low = 0.08;
+    let low = 0.02;
     let high = 0.98;
     let bestBlob: Blob | null = null;
 
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 10; i++) {
       const mid = (low + high) / 2;
       const candidate = await makeBlob(mid);
 
@@ -100,7 +100,7 @@ async function canvasToBlobWithLimit(
       }
     }
 
-    rawBlob = bestBlob || (await makeBlob(0.12));
+    rawBlob = bestBlob || (await makeBlob(0.02));
   }
 
   // Inject 300 DPI metadata for JPEG if requested

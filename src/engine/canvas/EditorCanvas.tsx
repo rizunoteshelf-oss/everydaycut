@@ -8,6 +8,7 @@ import { useStageZoom } from './useStageZoom.ts';
 import { CanvasDimensions } from '../state/types.ts';
 import { EraserOverlay } from './EraserOverlay.tsx';
 import { GuideOverlay } from './GuideOverlay.tsx';
+import { BeforeAfterSlider } from '../../components/ui/BeforeAfterSlider.tsx';
 
 interface EditorCanvasProps {
   stageRef?: React.RefObject<Konva.Stage | null>;
@@ -32,7 +33,40 @@ export const EditorCanvas: React.FC<EditorCanvasProps> = ({ stageRef }) => {
     setEditorMode,
     guideOverlay,
     customDimensions,
+    originalImageSrc,
+    showBeforeAfter,
+    setShowBeforeAfter,
   } = useEditorStore();
+
+  const [compareAfterSrc, setCompareAfterSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!showBeforeAfter) {
+      setCompareAfterSrc(null);
+      return;
+    }
+    const stage = activeStageRef.current;
+    if (!stage) return;
+    const transformers = stage.find('Transformer');
+    transformers.forEach((tr) => tr.hide());
+    const prevScaleX = stage.scaleX();
+    const prevScaleY = stage.scaleY();
+    const prevX = stage.x();
+    const prevY = stage.y();
+    stage.scale({ x: 1, y: 1 });
+    stage.position({ x: 0, y: 0 });
+    stage.batchDraw();
+    try {
+      setCompareAfterSrc(stage.toDataURL({ pixelRatio: 1 }));
+    } catch {
+      setCompareAfterSrc(null);
+    } finally {
+      stage.scale({ x: prevScaleX, y: prevScaleY });
+      stage.position({ x: prevX, y: prevY });
+      transformers.forEach((tr) => tr.show());
+      stage.batchDraw();
+    }
+  }, [showBeforeAfter, activeStageRef, layers, backgroundFill]);
 
   const { resetToFit } = useStageZoom();
   const [initialFitDone, setInitialFitDone] = useState(false);
@@ -192,12 +226,33 @@ export const EditorCanvas: React.FC<EditorCanvasProps> = ({ stageRef }) => {
         )}
 
         {/* Visual Alignment Guides (PAN Card Face, Signature, Passport, Amazon 85%, PFP) */}
-        {guideOverlay !== 'none' && (
+        {guideOverlay !== 'none' && !showBeforeAfter && (
           <GuideOverlay
             type={guideOverlay}
             width={stageDisplayWidth}
             height={stageDisplayHeight}
           />
+        )}
+
+        {/* Before / After Split Comparison Overlay */}
+        {showBeforeAfter && originalImageSrc && compareAfterSrc && (
+          <div className="absolute inset-0 z-40 bg-stage/95 flex flex-col items-center justify-center">
+            <BeforeAfterSlider
+              beforeSrc={originalImageSrc}
+              afterSrc={compareAfterSrc}
+              beforeLabel="Original"
+              afterLabel="Processed"
+              className="w-full h-full rounded-sm"
+              aspectRatio={`${activeDimensions.width}/${activeDimensions.height}`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowBeforeAfter(false)}
+              className="absolute bottom-3 right-3 z-50 min-h-[44px] px-4 py-2 rounded-full bg-zinc-900/90 hover:bg-black text-white text-xs font-bold shadow-lg border border-zinc-700"
+            >
+              Exit Compare
+            </button>
+          </div>
         )}
       </div>
     </div>

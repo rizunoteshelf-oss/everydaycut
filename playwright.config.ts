@@ -9,7 +9,7 @@ export default defineConfig({
   workers: 2,
   reporter: 'list',
   use: {
-    baseURL: 'http://localhost:4173',
+    baseURL: 'http://127.0.0.1:4179',
     trace: 'on-first-retry',
     headless: true,
   },
@@ -20,9 +20,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run preview -- --port 4173',
-    url: 'http://localhost:4173',
-    reuseExistingServer: true,
+    command: 'npm run preview -- --host 127.0.0.1 --port 4179 --strictPort',
+    url: 'http://127.0.0.1:4179',
+    reuseExistingServer: false,
     timeout: 30000,
   },
 });

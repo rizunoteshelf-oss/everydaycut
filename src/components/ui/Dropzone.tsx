@@ -285,13 +285,13 @@ const STUDIO_TOOLS: StudioToolDefinition[] = [
   },
   {
     id: 'upscale',
-    title: '2x / 4x Super-Resolution',
+    title: 'High-Precision 4K Clarity Upscaler',
     category: 'utilities',
-    specPill: 'Edge-Preserving 4K',
+    specPill: 'Bicubic + Unsharp 4K',
     pillColor: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
     icon: Wand2,
-    description: 'Sharpen low-resolution product photos up to 4K resolution using high-precision bicubic unsharp masking in browser memory.',
-    actionText: 'Upscale Image',
+    description: 'Upscale and sharpen low-resolution photos up to 4K using high-precision bicubic resampling and multi-scale unsharp masking in browser memory.',
+    actionText: 'Upscale & Sharpen',
   },
   {
     id: 'batch',
@@ -349,7 +349,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({
   onOpenBatch,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const pendingPresetRef = useRef<ToolPresetId>('cutout');
+  const pendingPresetRef = useRef<ToolPresetId | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [activeCategory, setActiveCategory] = useState<StudioCategory>('all');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -384,6 +384,9 @@ export const Dropzone: React.FC<DropzoneProps> = ({
     setIsProcessing(true);
     useEditorStore.getState().setSegmentationProgress({ status: 'idle', progress: 0, message: '' });
     try {
+      const normalizedOriginal = await loadImageElement(fileOrUrl);
+      useEditorStore.getState().setOriginalImageSrc(normalizedOriginal.src);
+
       // 1. Specialized handling for Signature Cropping (Monochrome high-contrast ink filter)
       if (presetId === 'pan_signature') {
         let srcUrl: string;
@@ -455,6 +458,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({
           cutH = segResult.height;
         } catch (segErr) {
           console.warn('AI Cutout fallback for bokeh:', segErr);
+          useEditorStore.getState().setSegmentationProgress({ status: 'idle', progress: 0, message: '' });
         }
 
         const now = Date.now();
@@ -588,6 +592,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({
             imgH = segResult.height;
           } catch (e) {
             console.warn('Document auto-cutout fallback to original:', e);
+            useEditorStore.getState().setSegmentationProgress({ status: 'idle', progress: 0, message: '' });
             const raw = await loadImageElement(fileOrUrl);
             srcUrl = raw.src;
             imgW = raw.width;
@@ -724,6 +729,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({
         imgHeight = segResult.height;
       } catch (segErr) {
         console.warn('AI Cutout skipped or timed out, loading original photo directly:', segErr);
+        useEditorStore.getState().setSegmentationProgress({ status: 'idle', progress: 0, message: '' });
         const fallback = await loadImageElement(fileOrUrl);
         cutoutUrl = fallback.src;
         imgWidth = fallback.width;
@@ -792,7 +798,8 @@ export const Dropzone: React.FC<DropzoneProps> = ({
 
   const onFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    const targetPreset = pendingPresetRef.current || activePreset;
+    const targetPreset = pendingPresetRef.current || activePreset || 'cutout';
+    pendingPresetRef.current = null;
     if (file) {
       handleProcessImage(file, targetPreset);
     }
@@ -803,7 +810,8 @@ export const Dropzone: React.FC<DropzoneProps> = ({
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files?.[0];
-    const targetPreset = pendingPresetRef.current || activePreset;
+    const targetPreset = pendingPresetRef.current || activePreset || 'cutout';
+    pendingPresetRef.current = null;
     if (file && file.type.startsWith('image/')) {
       handleProcessImage(file, targetPreset);
     }
@@ -981,7 +989,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({
             <button
               key={idx}
               onClick={() => {
-                const currentPreset = pendingPresetRef.current || activePreset;
+                const currentPreset = pendingPresetRef.current || activePreset || 'cutout';
                 const targetPreset =
                   currentPreset !== 'cutout'
                     ? currentPreset
@@ -1127,6 +1135,14 @@ export const Dropzone: React.FC<DropzoneProps> = ({
           className="min-h-[44px] py-2 px-2 flex items-center hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors"
         >
           Terms of Service
+        </button>
+        <span>&bull;</span>
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event('everydaycut:open-cookie-settings'))}
+          className="min-h-[44px] py-2 px-2 flex items-center hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors"
+        >
+          Privacy &amp; Cookie Settings
         </button>
       </div>
     </div>
